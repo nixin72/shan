@@ -5,14 +5,14 @@
                                             "Windows"))
             (def jar-name "shan.jar"))
 
-  clean (shell "rm -rf target")
+  clean (shell "rm -rf target shan.jar")
   run-main {:doc "Run main"
             :task (apply clojure "-M -m shan.core" *command-line-args*)}
 
   uberjar {:doc "Builds uberjar"
            :task (when (seq (fs/modified-since jar-name
-                                               ["project.clj" "src"]))
-                   (clojure "-M:build uber"))}
+                                               ["deps.edn" "build.clj" "src"]))
+                   (clojure "-T:build uber"))}
 
   run-uber {:doc "Run uberjar"
             :depends [uberjar]
@@ -27,10 +27,10 @@
   native-image {:doc "Builds native image"
                 :depends [graalvm uberjar]
                 :task (do
-                        (shell (str (fs/file graalvm
-                                             "bin"
-                                             (if windows? "gu.cmd" "gu")))
-                               "install" "native-image")
+                        #_(shell (str (fs/file graalvm
+                                               "bin"
+                                               (if windows? "gu.cmd" "gu")))
+                                 "install" "native-image")
                         (shell (str (fs/file graalvm
                                              "bin"
                                              (if windows?
@@ -38,4 +38,5 @@
                                                "native-image")))
                                "-jar" jar-name
                                "--no-fallback"
+                               "-H:ReflectionConfigurationFiles=reflect-config.json"
                                "-H:Name=shan"))}}}
