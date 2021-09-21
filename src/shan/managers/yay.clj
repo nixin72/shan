@@ -5,8 +5,10 @@
 
 (set! *warn-on-reflection* true)
 
-(defn install [pkgs]
-  (util/install-all pkgs #(shell/sh "yay" "-S" "--noconfirm" %)))
+(defn install [pkgs verbose?]
+  (util/install-all
+   pkgs #(shell/sh "yay" "-S" "--noconfirm" %) verbose?))
 
-(defn delete [pkgs]
-  (util/delete-all pkgs #(shell/sh "yay" "-R" "--noconfirm" %)))
+(defn delete [pkgs verbose?]
+  (util/delete-all
+   pkgs #(shell/sh "yay" "-R" "--noconfirm" %) verbose?))

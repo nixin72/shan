@@ -13,5 +13,5 @@ pom.xml.asc
 .hg/
 .lsp/
 .cpcache
-shan
+./shan
 shan.build_artifacts.txt

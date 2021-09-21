@@ -5,7 +5,7 @@
                                             "Windows"))
             (def jar-name "shan.jar"))
 
-  clean (shell "rm -rf target shan.jar")
+  clean (shell "rm -rf .cpcache target shan shan.build_artifacts.txt shan.jar")
   main {:doc "Run main"
         :task (apply clojure "-M -m shan.core" *command-line-args*)}
 

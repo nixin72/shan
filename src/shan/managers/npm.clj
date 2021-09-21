@@ -5,8 +5,10 @@
 
 (set! *warn-on-reflection* true)
 
-(defn install [pkgs]
-  (util/install-all pkgs #(shell/sh "npm" "install" "--global" %)))
+(defn install [pkgs verbose?]
+  (util/install-all
+   pkgs #(shell/sh "npm" "install" "--global" %) verbose?))
 
-(defn delete [pkgs]
-  (util/delete-all pkgs #(shell/sh "npm" "uninstall" "--global" %)))
+(defn delete [pkgs verbose?]
+  (util/delete-all
+   pkgs #(shell/sh "npm" "uninstall" "--global" %) verbose?))

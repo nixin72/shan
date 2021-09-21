@@ -1,79 +1,64 @@
 (ns shan.core
   (:require
-   [clojure.java.io :as io]
-   [clojure.edn :as edn]
-   [clojure.java.shell :as shell]
-   [clojure.data :as data]
-   [shan.managers.managers :as pm])
+   [cli-matic.core :refer [run-cmd]]
+   [shan.edit :as edit]
+   [shan.install :as install]
+   [shan.list :as list]
+   [shan.remove :as remove]
+   [shan.rollback :as rollback]
+   [shan.sync :as sync])
   (:gen-class))
 
-(def proj-name "shan")
-(def home (System/getenv "HOME"))
-(def config-name (str home "/.config/" proj-name ".edn"))
-(def gen-dir (str home "/.local/share/" proj-name))
-(def gen-file (str gen-dir "/generations.edn"))
+(def verbose?
+  {:as "Performs the action verbosely."
+   :default false
+   :option "verbose"
+   :short "v"
+   :type :with-flag})
 
-(defn read-edn [file-name]
-  (-> (slurp file-name)
-      .getBytes
-      io/reader
-      java.io.PushbackReader.
-      edn/read))
+(def temporary?
+  {:as "Don't reflect the changes in the config."
+   :default false
+   :option "temp"
+   :short "t"
+   :type :with-flag})
 
-(defn get-new []
-  (read-edn config-name))
+(def opts
+  {:command "shan"
+   :description "A declarative wrapper around your favourite package manager"
+   :version "0.1.0"
+   :subcommands
+   [{:command "sync"
+     :short "sc"
+     :description "Syncs your config to your installed packages."
+     :runs sync/sync-conf
+     :opts [verbose?]}
+    {:command "rollback"
+     :short "rb"
+     :description "Roll back your last change."
+     :runs rollback/cli-rollback}
+    {:command "install"
+     :short "in"
+     :description "Installs a package through a specified package manager."
+     :runs install/cli-install
+     :opts [verbose? temporary?]}
+    {:command "remove"
+     :short "rm"
+     :description "Uninstalls a package and removes it from your configuration."
+     :runs remove/cli-remove
+     :opts [verbose? temporary?]}
+    {:command "list"
+     :short "ls"
+     :description "Lists all of the packages installed through Shan."
+     :runs list/cli-list
+     :opts [temporary?]}
+    {:command "edit"
+     :short "ed"
+     :description "Shells out to $EDITOR for you to edit your config"
+     :runs edit/cli-edit}]})
 
-(defn get-old []
-  (try
-    (read-edn gen-file)
-    (catch java.io.FileNotFoundException _
-      (-> gen-dir java.io.File. .mkdir)
-      (-> gen-file java.io.File. .createNewFile)
-      (spit gen-file "[]")
-      [])))
-
-(defn add-generation [new-conf]
-  (try
-    (spit gen-file (str (conj (get-old) new-conf)))
-    (let [old (get-old)
-          num-gens (count old)]
-      (println "Creating generation" num-gens))
-    (catch java.io.FileNotFoundException _
-      (println "Error occured creating a new generation."))))
-
-(defn cli-sync []
-  (let [old-config (get-old)
-        last-config (last old-config)
-        new-config (get-new)
-        [add del] (data/diff new-config last-config)]
-
-    (when-not (= [add del] [nil nil])
-      (add-generation new-config))
-
-    [(reduce-kv #(assoc %1 %2 (when %3 (pm/install %2 %3))) {} add)
-     (reduce-kv #(assoc %1 %2 (when %3 (pm/delete %2 %3))) {} del)]))
-
-(defn cli-rollback [] :rollback)
-
-(defn cli-install [] :install)
-
-(defn cli-remove [] :remove)
-
-(defn cli-list [] :list)
-
-(defn cli-config []
-  (->> (shell/sh "/bin/sh" "-c" "vim" config-name) :out))
-
-(defn -main [& [command & args]]
-  (let [result (case command
-                 "sync" (cli-sync)
-                 "rb" (cli-rollback)
-                 "in" (cli-install)
-                 "rm" (cli-remove)
-                 "ls" (cli-list)
-                 "ed" (cli-config)
-                 "tm" (cli-config)
-                 (cli-sync))]
+(defn -main [& args]
+  (let [result (run-cmd args opts)]
     (when (= result [{} {}])
       (println "No changes made."))
     (shutdown-agents)))

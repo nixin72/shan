@@ -6,14 +6,14 @@
 
 (set! *warn-on-reflection* true)
 
-(defn install [manager pkgs]
+(defn install [manager pkgs verbose?]
   (case manager
-    :yay (yay/install pkgs)
-    :pip (pip/install pkgs)
-    :npm (npm/install pkgs)))
+    :yay (yay/install pkgs verbose?)
+    :pip (pip/install pkgs verbose?)
+    :npm (npm/install pkgs verbose?)))
 
-(defn delete [manager pkgs]
+(defn delete [manager pkgs verbose?]
   (case manager
-    :yay (yay/delete pkgs)
-    :pip (pip/delete pkgs)
-    :npm (npm/delete pkgs)))
+    :yay (yay/delete pkgs verbose?)
+    :pip (pip/delete pkgs verbose?)
+    :npm (npm/delete pkgs verbose?)))

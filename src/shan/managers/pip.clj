@@ -5,8 +5,10 @@
 
 (set! *warn-on-reflection* true)
 
-(defn install [pkgs]
-  (util/install-all pkgs #(shell/sh "python" "-m" "pip" "install" %)))
+(defn install [pkgs verbose?]
+  (util/install-all
+   pkgs #(shell/sh "python" "-m" "pip" "install" %) verbose?))
 
-(defn delete [pkgs]
-  (util/delete-all pkgs #(shell/sh "python" "-m" "pip" "uninstall" "-y" %)))
+(defn delete [pkgs verbose?]
+  (util/delete-all
+   pkgs #(shell/sh "python" "-m" "pip" "uninstall" "-y" %) verbose?))
