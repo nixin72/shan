@@ -7,8 +7,6 @@
    [shan.managers.managers :as pm])
   (:gen-class))
 
-(set! *warn-on-reflection* true)
-
 (def proj-name "shan")
 (def home (System/getenv "HOME"))
 (def config-name (str home "/.config/" proj-name ".edn"))
@@ -38,19 +36,24 @@
   (try
     (spit gen-file (str (conj (get-old) new-conf)))
     (get-old)
-    (catch java.io.FileNotFoundException _)))
+    (println "Done adding generation")
+    (catch java.io.FileNotFoundException _
+      (println "Error occured creating a new generation."))))
 
 (defn cli-sync []
   (let [old-config (get-old)
         last-config (last old-config)
         new-config (get-new)
-        [add del] (data/diff last-config new-config)]
+        [add del] (data/diff new-config last-config)]
 
     (when-not (= [add del] [nil nil])
       (add-generation new-config))
 
-    (prn [(reduce-kv #(assoc %1 %2 (pm/install %2 %3)) {} add)
-          (reduce-kv #(assoc %1 %2 (pm/delete %2 %3)) {} del)])))
+    (println "Install: " add)
+    (println "Remove:  " del)
+
+    [(reduce-kv #(assoc %1 %2 (when %3 (pm/install %2 %3))) {} add)
+     (reduce-kv #(assoc %1 %2 (when %3 (pm/delete %2 %3))) {} del)]))
 
 (defn cli-rollback [] :rollback)
 
@@ -75,4 +78,6 @@
     "ls" (cli-list)
     "ed" (cli-config)
     "tm" (cli-config)
-    (cli-sync)))
+    (cli-sync))
+  (shutdown-agents)
+  (println "exiting"))
