@@ -1,12 +1,12 @@
 (ns shan.managers.yay
   (:require
-   [clojure.string :as str]
-   [clojure.java.shell :as shell]))
+   [clojure.java.shell :as shell]
+   [shan.managers.util :as util]))
 
 (set! *warn-on-reflection* true)
 
 (defn install [pkgs]
-  (:exit (shell/sh "yay" "-S" "--noconfirm" (str/join " " pkgs))))
+  (util/install-all pkgs #(shell/sh "yay" "-S" "--noconfirm" %)))
 
 (defn delete [pkgs]
-  (:exit (shell/sh "yay" "-R" "--noconfirm" (str/join " " pkgs))))
+  (util/delete-all pkgs #(shell/sh "yay" "-R" "--noconfirm" %)))

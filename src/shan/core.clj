@@ -35,8 +35,9 @@
 (defn add-generation [new-conf]
   (try
     (spit gen-file (str (conj (get-old) new-conf)))
-    (get-old)
-    (println "Done adding generation")
+    (let [old (get-old)
+          num-gens (count old)]
+      (println "Creating generation" num-gens))
     (catch java.io.FileNotFoundException _
       (println "Error occured creating a new generation."))))
 
@@ -49,15 +50,10 @@
     (when-not (= [add del] [nil nil])
       (add-generation new-config))
 
-    (println "Install: " add)
-    (println "Remove:  " del)
-
     [(reduce-kv #(assoc %1 %2 (when %3 (pm/install %2 %3))) {} add)
      (reduce-kv #(assoc %1 %2 (when %3 (pm/delete %2 %3))) {} del)]))
 
 (defn cli-rollback [] :rollback)
-
-(defn cli-upgrade [] :upgrade)
 
 (defn cli-install [] :install)
 
@@ -69,15 +65,15 @@
   (->> (shell/sh "/bin/sh" "-c" "vim" config-name) :out))
 
 (defn -main [& [command & args]]
-  (case command
-    "sync" (cli-sync)
-    "rb" (cli-rollback)
-    "up" (cli-upgrade)
-    "in" (cli-install)
-    "rm" (cli-remove)
-    "ls" (cli-list)
-    "ed" (cli-config)
-    "tm" (cli-config)
-    (cli-sync))
-  (shutdown-agents)
-  (println "exiting"))
+  (let [result (case command
+                 "sync" (cli-sync)
+                 "rb" (cli-rollback)
+                 "in" (cli-install)
+                 "rm" (cli-remove)
+                 "ls" (cli-list)
+                 "ed" (cli-config)
+                 "tm" (cli-config)
+                 (cli-sync))]
+    (when (= result [{} {}])
+      (println "No changes made."))
+    (shutdown-agents)))
