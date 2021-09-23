@@ -12,3 +12,6 @@
 (defn delete [pkgs verbose?]
   (util/delete-all
    pkgs #(shell/sh "python" "-m" "pip" "uninstall" "-y" %) verbose?))
+
+(defn installed? [pkg]
+  (= 0 (:exit (shell/sh "python" "-m" "pip" "show" (str pkg)))))

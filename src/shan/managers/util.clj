@@ -9,7 +9,7 @@
               (if (= (:exit out) 0)
                 (println "Successfully installed!")
                 (println "Failed to install"))
-              (hash-map p out))))
+              (into {:package p} out))))
         pkgs))
 
 (defn delete-all [pkgs delete-fn verbose?]
@@ -21,5 +21,5 @@
               (if (= (:exit out) 0)
                 (println "Successfully uninstalled!")
                 (println "Failed to uninstall"))
-              (hash-map p out))))
+              (into {:package p} out))))
         pkgs))

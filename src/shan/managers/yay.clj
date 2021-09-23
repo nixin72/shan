@@ -12,3 +12,6 @@
 (defn delete [pkgs verbose?]
   (util/delete-all
    pkgs #(shell/sh "yay" "-R" "--noconfirm" %) verbose?))
+
+(defn installed? [pkg]
+  (= 0 (:exit (shell/sh "yay" "-Q" (str pkg)))))

@@ -1,6 +1,7 @@
 (ns shan.core
   (:require
    [cli-matic.core :refer [run-cmd]]
+   [shan.managers.npm :as npm]
    [shan.edit :as edit]
    [shan.install :as install]
    [shan.list :as list]

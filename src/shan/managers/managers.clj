@@ -17,3 +17,9 @@
     :yay (yay/delete pkgs verbose?)
     :pip (pip/delete pkgs verbose?)
     :npm (npm/delete pkgs verbose?)))
+
+(defn installed? [manager pkg]
+  (case manager
+    :yay (yay/installed? pkg)
+    :pip (pip/installed? pkg)
+    :npm (npm/installed? pkg)))

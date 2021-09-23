@@ -44,22 +44,25 @@
     (catch java.io.FileNotFoundException _
       (println "Error occured creating a new generation."))))
 
-(defn merge-conf [conf1 conf2]
-  (let [[old new] (data/diff conf1 conf2)]
-    (reduce-kv (fn [a k v]
-                 (if (contains? a k)
-                   (update a k into v)
-                   (assoc a k v)))
-               old
-               new)))
+(defn merge-conf
+  ([conf1 conf2]
+   (let [[old new] (data/diff conf1 conf2)]
+     (reduce-kv (fn [a k v]
+                  (if (contains? a k)
+                    (update a k into v)
+                    (assoc a k v)))
+                old
+                new)))
+  ([conf1 conf2 & confs]
+   (apply merge-conf (merge-conf conf1 conf2) confs)))
 
-(defn flat-map->map [vector-map]
+(defn flat-map->map [vector-map default-key]
   (->> (reduce (fn [a v]
                  (let [sym (symbol v)
                        kw (keyword (subs v 1))]
                    (cond
                      (= v (str kw)) (into a [kw []])
-                     (= a []) (into a [(first (first (get-new))) [sym]])
+                     (= a []) (into a [default-key [sym]])
                      :else (conj (pop a) (conj (last a) sym)))))
                []
                vector-map)

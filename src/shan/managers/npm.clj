@@ -12,3 +12,10 @@
 (defn delete [pkgs verbose?]
   (util/delete-all
    pkgs #(shell/sh "npm" "uninstall" "--global" %) verbose?))
+
+(defn installed? [pkg]
+  (shell/sh "/bin/sh" "-c" "npm" "list" "-g" (str pkg)))
+
+(installed? "underscore")
+
+(System/getenv "PATH")
