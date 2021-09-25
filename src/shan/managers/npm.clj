@@ -1,21 +1,31 @@
 (ns shan.managers.npm
   (:require
    [clojure.java.shell :as shell]
-   [shan.managers.util :as util]))
+   [clojure.java.io :as io]
+   [shan.managers.util :as util]
+   [shan.util :as u]))
 
-(set! *warn-on-reflection* true)
+(def node-path
+  (let [path (System/getenv "NODE_PATH")
+        warn "Not having $NODE_PATH set may cause shan to reinstall NPM packages."]
+    (cond
+      (nil? path)
+      (u/warning "Your NODE_PATH is not set.\n" warn)
+
+      (not (.exists (io/file path)))
+      (u/warning "Your NODE_PATH does not exist.\n" warn)
+
+      :else path)))
+
+(defn installed? [pkg]
+  (if node-path
+    (some #{(str pkg)} (->> node-path io/file .list (mapv identity)))
+    (shell/sh "npm" "list" "-g" (str pkg))))
 
 (defn install [pkgs verbose?]
   (util/install-all
-   pkgs #(shell/sh "npm" "install" "--global" %) verbose?))
+   pkgs #(shell/sh "npm" "install" "--global" %) installed? verbose?))
 
 (defn delete [pkgs verbose?]
-  (util/delete-all
+  (util/install-all
    pkgs #(shell/sh "npm" "uninstall" "--global" %) verbose?))
-
-(defn installed? [pkg]
-  (shell/sh "/bin/sh" "-c" "npm" "list" "-g" (str pkg)))
-
-(installed? "underscore")
-
-(System/getenv "PATH")

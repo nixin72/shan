@@ -4,6 +4,7 @@
    [clojure.edn :as edn]
    [clojure.pprint :refer [pprint]]
    [clojure.data :as data]
+   [clojure.string :as str]
    [shan.config :as c]))
 
 (defn read-edn [file-name]
@@ -45,6 +46,7 @@
       (println "Error occured creating a new generation."))))
 
 (defn merge-conf
+  ([conf] conf)
   ([conf1 conf2]
    (let [[old new] (data/diff conf1 conf2)]
      (reduce-kv (fn [a k v]
@@ -79,3 +81,24 @@
 
 (defn add-to-conf [install-map]
   (write-edn c/conf-file (merge-conf (get-new) install-map)))
+
+(defn red [string]
+  (str "\033[1;31m" string "\033[0m"))
+
+(defn yellow [string]
+  (str "\033[1;33m" string "\033[0m"))
+
+(defn green [string]
+  (str "\033[1;32m" string "\033[0m"))
+
+(defn blue [string]
+  (str "\033[1;34m" string "\033[0m"))
+
+(defn bold [string]
+  (str "\033[0;1m" string "\033[0m"))
+
+(defn warning [arg]
+  (println (-> "Warning: " yellow bold) arg))
+
+(defn error [arg]
+  (println (-> "Error: " red bold) arg))

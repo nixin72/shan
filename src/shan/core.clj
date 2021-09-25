@@ -7,7 +7,8 @@
    [shan.list :as list]
    [shan.remove :as remove]
    [shan.rollback :as rollback]
-   [shan.sync :as sync])
+   [shan.sync :as sync]
+   [shan.util :as u])
   (:gen-class))
 
 (def verbose?
