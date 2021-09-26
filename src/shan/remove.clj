@@ -1,17 +1,8 @@
 (ns shan.remove
   (:require
-   [shan.util :as u]
    [clojure.string :as str]
-   [clojure.data :as data]
+   [shan.util :as u]
    [shan.managers.managers :as pm]))
-
-(defn in-config [conf pkg]
-  (let [pkg (symbol pkg)]
-    (reduce-kv (fn [a k v]
-                 (if (some #{pkg} v)
-                   (assoc a k [pkg])
-                   a))
-               {} conf)))
 
 (defn remove-with-pm-from-list [pms pkg]
   (try
@@ -31,10 +22,10 @@
 
 (defn remove-with-pm-from-installed [pkg]
   (let [pms (pm/installed-with pkg)]
-    (println pms)
     (cond
       (= (count pms) 0)
-      (u/error "This package isn't installed in any package manager known by Shan.")
+      (u/warning (str "Package '" (u/bold pkg)
+                      "' isn't installed in any package manager known by Shan."))
 
       (= (count pms) 1) {(first pms) [pkg]}
       :else (remove-with-pm-from-list pms pkg))))
@@ -44,11 +35,7 @@
    u/merge-conf
    (mapv (fn [pkg]
            (let [pkg (symbol pkg)
-                 pms (reduce-kv
-                      (fn [a k v] (if (some #{pkg} v)
-                                    (conj a k) a))
-                      []
-                      conf)]
+                 pms (reduce-kv #(if (some #{pkg} %3) (conj %1 %2) %1) [] conf)]
              (cond
                (= (count pms) 1) {(first pms) [pkg]}
                (= (count pms) 0) (remove-with-pm-from-installed pkg)
@@ -57,10 +44,12 @@
 
 (defn cli-remove [{:keys [verbose temp _arguments]}]
   (let [conf (if temp (u/get-temp) (u/get-new))
-        remove (u/flat-map->map _arguments :default)
-        default (find-package-manager conf (:default remove))]
-    (println remove)
-    (println (data/diff conf default))
-    #_(println (map #(in-config conf %) _arguments))))
-
-;; (cli-remove {:_arguments ["atop" "nvm"]})
+        delete-map (u/flat-map->map _arguments :default)
+        default (find-package-manager (dissoc conf :default)
+                                      (:default delete-map))
+        delete-map (dissoc delete-map :default)
+        delete-map (u/merge-conf default delete-map)]
+    (reduce-kv #(assoc %1 %2 (pm/delete %2 %3 verbose)) {} delete-map)
+    (if temp
+      (u/remove-from-temp conf delete-map)
+      (u/remove-from-new conf delete-map))))

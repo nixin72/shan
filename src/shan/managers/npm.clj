@@ -2,7 +2,6 @@
   (:require
    [clojure.java.shell :as shell]
    [clojure.java.io :as io]
-   [shan.managers.util :as util]
    [shan.util :as u]))
 
 (def node-path
@@ -23,9 +22,9 @@
     (shell/sh "npm" "list" "-g" (str pkg))))
 
 (defn install [pkgs verbose?]
-  (util/install-all
+  (u/install-all
    pkgs #(shell/sh "npm" "install" "--global" %) installed? verbose?))
 
 (defn delete [pkgs verbose?]
-  (util/install-all
-   pkgs #(shell/sh "npm" "uninstall" "--global" %) verbose?))
+  (u/delete-all
+   pkgs #(shell/sh "npm" "uninstall" "--global" %) installed? verbose?))

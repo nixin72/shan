@@ -4,8 +4,18 @@
    [clojure.edn :as edn]
    [clojure.pprint :refer [pprint]]
    [clojure.data :as data]
-   [clojure.string :as str]
+   [clojure.set :as set]
    [shan.config :as c]))
+
+(def normal "\033[0m")
+(defn red [string]    (str "\033[0;31m" string normal))
+(defn green [string]  (str "\033[0;32m" string normal))
+(defn yellow [string] (str "\033[0;33m" string normal))
+(defn blue [string]   (str "\033[0;34m" string normal))
+(defn grey [string]   (str "\033[0;37m" string normal))
+(defn bold [string]   (str "\033[0;1m"  string normal))
+(defn warning [arg]   (println (-> "Warning:" yellow bold) arg))
+(defn error [arg]     (println (-> "Error:" red bold) arg))
 
 (defn read-edn [file-name]
   (-> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read))
@@ -51,7 +61,7 @@
    (let [[old new] (data/diff conf1 conf2)]
      (reduce-kv (fn [a k v]
                   (if (contains? a k)
-                    (update a k into v)
+                    (update a k #(into [] (into (into #{} v) %)))
                     (assoc a k v)))
                 old
                 new)))
@@ -76,29 +86,70 @@
                    (assoc a k v)))
                {})))
 
-(defn add-to-temp [install-map]
-  (write-edn c/temp-file (merge-conf (get-temp) install-map)))
+(defn remove-from-config [conf pkgs]
+  (reduce-kv
+   (fn [a k v]
+     (let [diff (into [] (set/difference (into #{} (a k)) (into #{} v)))]
+       (if (empty? diff)
+         (dissoc a k)
+         (update a k #(into [] (set/difference (into #{} %) (into #{} v)))))))
+   conf
+   pkgs))
 
-(defn add-to-conf [install-map]
-  (write-edn c/conf-file (merge-conf (get-new) install-map)))
+(defn add-to-temp
+  ([install-map] (add-to-temp (get-temp) install-map))
+  ([config install-map] (write-edn c/temp-file (merge-conf config install-map))))
 
-(defn red [string]
-  (str "\033[1;31m" string "\033[0m"))
+(defn add-to-conf
+  ([install-map] (add-to-conf (get-new) install-map))
+  ([config install-map] (write-edn c/conf-file (merge-conf config install-map))))
 
-(defn yellow [string]
-  (str "\033[1;33m" string "\033[0m"))
+(defn remove-from-temp
+  ([remove-map] (remove-from-temp (get-temp) remove-map))
+  ([config remove-map] (write-edn c/temp-file (remove-from-config config remove-map))))
 
-(defn green [string]
-  (str "\033[1;32m" string "\033[0m"))
+(defn remove-from-new
+  ([remove-map] (remove-from-new (get-new) remove-map))
+  ([config remove-map] (write-edn c/conf-file (remove-from-config config remove-map))))
 
-(defn blue [string]
-  (str "\033[1;34m" string "\033[0m"))
+(defn install-all [pkgs install-fn installed? verbose?]
+  (->>
+   ;; Put it into a set first to avoid doing the same thing multiple times
+   (into #{} pkgs)
+   ;; Filter out any accidental nils
+   (filter #(not (nil? %)))
+   ;; Install all other packages
+   (mapv (fn [p]
+           (if (installed? p)
+             (or (println (bold p) (blue "is already installed")) p)
+             (do
+               (print (str "Installing " (bold p) "... "))
+               (flush)
+               (let [out (install-fn (str p))]
+                 (when verbose?
+                   (println "\n" (:out out)))
+                 (if (= (:exit out) 0)
+                   (do (-> "Successfully installed!" green println) p)
+                   (-> "Failed to install" red println)))))))))
 
-(defn bold [string]
-  (str "\033[0;1m" string "\033[0m"))
-
-(defn warning [arg]
-  (println (-> "Warning: " yellow bold) arg))
-
-(defn error [arg]
-  (println (-> "Error: " red bold) arg))
+(defn delete-all [pkgs delete-fn installed? verbose?]
+  (->>
+   ;; Avoid doing the same thing twice
+   (into #{} pkgs)
+   ;; Filter out packages that aren't installed - no need to "uninstall" them
+   (filter
+    #(cond
+       (not (installed? %)) (println (bold %) (blue "does not exist"))
+       (nil? %) false
+       :else true))
+   ;; Uninstall all other packages
+   (mapv (fn [p]
+           (-> (str "Uninstalling " p "... ") bold print)
+           (flush)
+           (let [out (delete-fn (str p))]
+             (when verbose?
+               (println "\n" (:out out)))
+             (if (= (:exit out) 0)
+               (-> "Successfully uninstalled!" green println)
+               (-> "Failed to uninstall" red println))
+             (into {:package p} out))))))

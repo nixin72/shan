@@ -23,4 +23,4 @@
       (println "\nPackages that failed to install were not added to your config."))
     (if temp
       (u/add-to-temp success)
-      (u/add-to-conf success))))
+      (u/add-to-conf new-conf success))))

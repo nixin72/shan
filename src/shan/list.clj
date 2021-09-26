@@ -5,12 +5,10 @@
 
 (defn cli-list [{:keys [temp _arguments]}]
   (letfn [(print-config [config]
-            (->> config
+            (->> (dissoc config :default)
                  (reduce-kv
                   (fn [a k v]
-                    (conj a
-                          (str "\033[1m" (name k) ":\033[0m"
-                               "\n" (str/join ", " v))))
+                    (conj a (str (u/bold (name k)) ":\n" (str/join ", " v))))
                   [])
                  (str/join "\n\n")
                  println))]

@@ -1,13 +1,14 @@
 (ns shan.core
   (:require
    [cli-matic.core :refer [run-cmd]]
-   [shan.managers.npm :as npm]
    [shan.edit :as edit]
    [shan.install :as install]
    [shan.list :as list]
    [shan.remove :as remove]
    [shan.rollback :as rollback]
    [shan.sync :as sync]
+   [shan.help :as help]
+   [shan.managers.managers :as pm]
    [shan.util :as u])
   (:gen-class))
 
@@ -25,10 +26,18 @@
    :short "t"
    :type :with-flag})
 
+(def context
+  (str "Given the following shan.edn config file:\n"
+       (u/red "{") (u/blue ":default :yay") "\n"
+       (u/blue " :yay") " " (u/yellow "[") "nodejs python3 neovim atop" (u/yellow "]") "\n"
+       (u/blue " :npm") " " (u/yellow "[") "atop react" (u/yellow "]") (u/red "}") "\n\n"))
+
 (def opts
   {:command "shan"
    :description "A declarative wrapper around your favourite package manager"
    :version "0.1.0"
+   :global-help help/global-help
+   :subcmd-help help/subcommand-help
    :subcommands
    [{:command "sync"
      :short "sc"
@@ -41,12 +50,28 @@
      :runs rollback/cli-rollback}
     {:command "install"
      :short "in"
-     :description "Installs a package through a specified package manager."
+     :description "Install packages through any supported package manager."
+     :examples [context
+                {:desc (str "Install packages through " (u/blue "yay") ", this config's default package manager")
+                 :ex (str (u/green "shan") " install open-jdk vscode")}
+                {:desc "Install packages through a specified package manager"
+                 :ex (str (u/green "shan") " install " (u/blue ":npm") " react-native expo")}
+                {:desc "Install packages through various package managers"
+                 :ex (str (u/green "shan") " install open-jdk vscode " (u/blue ":npm") " react-native expo " (u/blue ":pip") " PyYAML")}]
      :runs install/cli-install
      :opts [verbose? temporary?]}
     {:command "remove"
      :short "rm"
-     :description "Uninstalls a package and removes it from your configuration."
+     :description "Uninstall packages through any supported package manager."
+     :examples [context
+                {:desc "Removes the packages through yay"
+                 :ex (str (u/green "shan") " remove python nodejs")}
+                {:desc "Removes neovim through yay and react through npm"
+                 :ex (str (u/green "shan") " remove neovim react")}
+                {:desc "Removes atop after prompting the user which manager to use."
+                 :ex (str (u/green "shan") " remove atop")}
+                {:desc "Removes emacs after searching to find out what installed it."
+                 :ex (str (u/green "shan") " remove emacs")}]
      :runs remove/cli-remove
      :opts [verbose? temporary?]}
     {:command "list"
@@ -57,10 +82,13 @@
     {:command "edit"
      :short "ed"
      :description "Shells out to $EDITOR for you to edit your config"
-     :runs edit/cli-edit}]})
+     :runs edit/cli-edit}]
+   :package-managers pm/package-managers})
 
 (defn -main [& args]
-  (let [result (run-cmd args opts)]
+  (let [result (try (run-cmd args opts)
+                    (catch clojure.lang.ExceptionInfo _
+                      (run-cmd ["--help"] opts)))]
     (when (= result [{} {}])
       (println "No changes made."))
     (shutdown-agents)))
