@@ -1,118 +1,197 @@
-**SUPER EARLY STAGES. NOT USABLE, AND FAR FROM STABLE**
-
 # Shan
 
-A declarative wrapper for your favourite package manager.
+Shan is a declarative wrapper around your favourite package manager.
+
+- Cross-platform: works on Linux, Windows and MacOS
+- Simple: shan harnesses existing package managers to do the heavy lifting
+- Declarative: sync to your config or let shan build it for you
+- Wide support: shan supports tons of package managers out of the box
+- Extensible: your package manager not supported? Add it ~15 lines of code
+- Fast: shan is compiled using GraalVM to make it super fast - no JVM here.
+
+**NOTE:** Shan still isn't at 1.0 release, and as of now, it in fact does _not_ 
+support tons of package managers. My goal is, as of 1.0, to support:
+- dpkg
+- yay
+- paru
+- dnf
+- brew
+- chocolatey
+- winget
+- npm
+- pip
+- Gems
+
+## Table of Contents
+- [Why use shan?](#why-shan)
+- [Using shan](#usage)
+  - [Installing packages](#installing-packages)
+  - [Removing packages](#removing-packages)
+  - [Your config](#your-config)
+  - [Temporary installs](#temporary-installs)
+- [Contributing](#contributing)
+  - [Adding a package manager](#adding-a-package-manager)
+- [License](#license)
+
+## Why Shan?
+
+Shan is for people who want to be able to manage their packages declaratively,
+but don't want the complexity that comes with other systems like NixOS or Guix. 
+It's aim is to facilitate setting up new systems. If you've bought a new laptop
+and want to install everything you had with `brew` or you've decided you want to 
+try out Linux and want to install you had in `chocolatey`. Maybe you like 
+distro-hopping and want a way to get started quickly with all the packages you 
+know and love, or maybe you just broke your Arch install and decided it's easier
+to nuke your system than fix the issue (I know I've been there).
+
+If you've ever been in any of these situations, try out shan. Shan works for 
+everyone, no matter what operating system you're using, no matter what package 
+managers you're using.
 
 ## Usage
 
-### Add or remove packages with your config
-You can use the `shan.edn` file to maintain a list of all the packages you want
-installed. Adding or removing packages, then running `shan sync` will sync the 
-configuration file to your list of installed packages. Packages installed via 
-other means will not be effected, the only packages that will be removed are the
-ones that have been removed from your `shan.edn`.
-
-1. Open your `~/.config/shan.edn`
-2. Add or remove a package 
-3. Run `shan sync`
-
-### Install right from command line
-Editing the config and then syncing every time you want to install something can
-be a pain in the ass. As an alternative, you can install something right from 
-the command line and add it to your config in one command:
-
-```sh
-shan i npm react-native
+### Installing packages
+Installing packages with shan is easily done through the `install` or `in` 
+subcommand. 
+``` sh
+shan install nodejs
 ```
+For example will install `nodejs` using the [default package manager](#your-config).
 
-You can also omit the package manager if you're installing a package for the 
-first package manager in your config:
+You can also specify to shan which package manager should be used to install a 
+package:
+``` sh
+shan install nodejs :npm react
+```
+And this will install `nodejs` using the default package manager, and then `react`
+using npm.
 
-Config:
+You can also mix and match things in any order and install as many packages as you
+want in a single command:
+
+``` sh
+shan install nodejs python :npm react react-native :pip PyYAML wakatime :npm expo expo-cli
+```
+Every time you install a package, the package will also be added to 
+[your config file](#your-config) so that down the road, you'll have everything
+available to you in a declarative config.
+
+### Removing packages
+When removing a package using Shan, it's generally able to figure out which 
+package manager it should be using to remove a package. Let's say we have the 
+following [config file](#your-config):
 ```clojure
-{:yay
-  [vim zsh leiningen]}
+{:yay [nodejs neovim atop]
+ :npm [react underscore atop]}
 ```
-Then run 
-```sh
-shan i clang
+Now, if we want to remove `nodejs`, we simply have to do:
+
+``` sh
+shan remove nodejs
 ```
+And shan will figure out which package manager to remove nodejs using. Unlike 
+installing, where it'll install using your default package manager, removing will
+simply remove from where the package exists. 
 
-Will install clang and produce
-```clojure
-{:yay
-  [vim zsh leiningen clang]}
+``` sh
+shan remove nodejs neovim react
 ```
+Will remove `nodejs` and `neovim` using yay, and `react` will be removed using 
+`npm`.
 
-### Removing from the command line
-Like installing, you can also remove packages right from the command line. This 
-is a little easier, since you don't need to specify the package manager, it'll 
-just look for a package with the same name in your config.
+We do however have `atop` installed here in both yay *and* npm. In this case,
+Shan will prompt you for which package manager you want to install `atop` from.
 
+A package also doesn't need to be in your config to uninstall it. 
+``` sh
+shan remove emacs
 ```
-shan rm clang
-```
+If you remove a package that isn't in your config, shan will look at which 
+package mangers are available on your system, then check if that package is
+installed using any of those package managers. If it is, then it'll remove the 
+package using that package manager, and let you know where it found it.
 
-Will revert our config back to
-```clojure
-{:yay
-  [vim zsh leiningen]}
-```
+### Your config
+Shan supports configs written in JSON, YAML, or Clojure's own data format, EDN.
+The examples here will be written in EDN, however they translate intuitively
+to JSON and YAML.
 
-If there's packages from two package managers under the same name, you can 
-either specify which one you want to be removed, or if you omit it, it'll prompt
-you to select which one you want deleted.
-
-```clojure
-{:yay
-  [react-native-cli]
- :npm
-  [react-native-cli]}
-```
-
-```
-$ shan rm react-native-cli
-You have multiple packages installed named `react-native-cli`. Which one would
-you like to remove?
-1) yay 2) npm
-```
-
-### Editing your config
-The configuration for shan is stored in `~/.config/shan.edn`. The format for this 
-file follows Clojure's EDN data format. This format is very similar to JSON, 
-however `:`s come before the keys and commas are unnecessary.
-
+The config for Shan is very simple, and requires nothing to get started. In fact,
+if you have no config, `shan install :yay vim` would generate the following config
+for you:
 ``` clojure
-{:this "is a hashmap"
- :and-this ["is" "an" "array"]
- :and-now-this #{"is" "a" "set"}}
+{:yay [vim]}
+```
+Every time you install or remove a package, this change is reflected in your 
+config file. Given the simple config above,
+``` sh
+shan install :npm react
+```
+Would modify your config file to the following:
+``` clojure
+{:yay [vim],
+ :npm [react]}
 ```
 
-You shan config is a simple structure with a hashmap containing arrays. Each key 
-in the hashmap is a supported package manager (such as `:yay` or `:npm`), and 
-the values are an array of strings, where each string is a package name.
+#### Default package manager
+One thing that's very useful to have specified in your config is a default 
+package manager. Without this specified, you will need to specify a package 
+manager for everything you install. 
+``` clojure
+{:default :yay
+ :yay [vim]}
+```
+Having a `default` key in your config specifies which package manager shan should
+use when none are specified.
+
+You can set a default package manager using
+``` sh
+shan default <package-manager>
+```
 
 ### Temporary packages
 Sometimes you want to quickly install a package to test it out, but you don't 
-necessarily want it to be added to your config. But then you forget to uninstall
-it later, and these random packages accumulate. With shan, you can install a
-package temporarily, and shan will keep track of all the temporary packages to
-allow you to list what you have temporarily installed so you can add them to 
-your config, or so you can purge all the temporary packages.
+necessarily want it to be added to your config. When installing or removing a 
+package, shan supports the ability to make "temporary" changes. This means that
+the changes you make won't get added to your config file.
 
-```sh
-$ shan ti yay btop htop
-$ shan tls
-btop
-htop
-$ shan trm btop
-$ shan tls
-htop
-$ shan tp
-$ shan tls
-No temporary packages installed
+``` sh
+shan install -t nodejs :npm react
 ```
+Will install nodejs using the default package manager and react using npm, however
+neither of these packages will get added to your config. Instead, the changes will
+be saved in a separate file. This way, shan can act against that file independently 
+of your config. For example if you want to uninstall everything temporary, you 
+can simply do
 
+``` sh
+shan config purge
+```
+And shan will delete everything temporarily installed. To protect you from 
+accidentally purging your actual config, you can only purge your temporary one.
 
+## Contributing
+
+Any and all contributions are more than welcome! If you have a feature request, 
+a question, or a bug to report, make an issue. If you think you can make the 
+feature or fix the bug, a PR would be awesome. 
+
+### Adding a Package Manager
+shan doesn't support every package manager, but I would love it to! If you're 
+interested in adding a package manager, you can request it get added in an issue,
+but adding one yourself is very simple.
+
+1. Copy `src/shan/managers/yay.clj` to a new file
+2. Replace the `yay` with the name of the package manager you'd like to add.
+3. At the top line of the file, again replace `yay` with the package manager.
+4. In the `install` function, replace the command with the command you'd use to install using your package manager.
+5. Do the same with the `installed?` and `delete` functions.
+
+Questions? Put up an issue or make a PR with what you've got so far.
+
+## License
+
+The MIT License (MIT)
+
+Copyright (c) 2021 Philip Dumaresq
 

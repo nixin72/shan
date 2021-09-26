@@ -3,8 +3,6 @@
    [clojure.java.shell :as shell]
    [shan.util :as u]))
 
-(set! *warn-on-reflection* true)
-
 (defn installed? [pkg]
   (= 0 (:exit (shell/sh "python" "-m" "pip" "show" (str pkg)))))
 
