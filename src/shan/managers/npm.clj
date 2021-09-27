@@ -20,11 +20,3 @@
   (if node-path
     (some #{(str pkg)} (->> node-path io/file .list (mapv identity)))
     (shell/sh "npm" "list" "-g" (str pkg))))
-
-(defn install [pkgs verbose?]
-  (u/install-all
-   pkgs #(shell/sh "npm" "install" "--global" %) installed? verbose?))
-
-(defn delete [pkgs verbose?]
-  (u/delete-all
-   pkgs #(shell/sh "npm" "uninstall" "--global" %) installed? verbose?))
