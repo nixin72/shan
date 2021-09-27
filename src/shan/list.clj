@@ -11,8 +11,20 @@
                     (conj a (str (u/bold (name k)) ":\n" (str/join ", " v))))
                   [])
                  (str/join "\n\n")
-                 println))]
+                 println))
+          (config-empty []
+            (println (str "You have no" (if temp " temporary " " ") "packages installed.")))]
     (cond
       (not= _arguments []) (println "Too many arguments supplied to list")
-      (= temp false) (print-config (u/get-new))
-      :else (print-config (u/get-temp)))))
+
+      (= temp false)
+      (let [conf (u/get-new)]
+        (if (= conf {})
+          (config-empty)
+          (print-config conf)))
+
+      :else
+      (let [conf (u/get-temp)]
+        (if (= conf {})
+          (config-empty)
+          (print-config conf))))))
