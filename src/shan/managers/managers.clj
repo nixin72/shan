@@ -9,6 +9,9 @@
   {:brew {:install "brew install"
           :remove "brew uninstall"
           :installed? "brew list"}
+   :choco {:install "choco install"
+           :remove "choco uninstall"
+           :installed? "choco list --local-only"}
    :yay {:install "yay -S --noconfirm"
          :remove "yay -R --noconfirm"
          :installed? "yay -Q"}
