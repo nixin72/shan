@@ -6,12 +6,15 @@
    [shan.util :as u]))
 
 (def package-managers
-  {:npm {:install "npm install --global"
-         :remove "npm uninstall --gloabl"
-         :installed? npm/installed?}
+  {:brew {:install "brew install"
+          :remove "brew uninstall"
+          :installed? "brew list"}
    :yay {:install "yay -S --noconfirm"
          :remove "yay -R --noconfirm"
          :installed? "yay -Q"}
+   :npm {:install "npm install --global"
+         :remove "npm uninstall --gloabl"
+         :installed? npm/installed?}
    :pip {:install "python -m pip install"
          :remove "python -m pip uninstall -y"
          :installed? "python -m pip show"}

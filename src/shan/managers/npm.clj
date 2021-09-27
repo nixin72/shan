@@ -9,10 +9,10 @@
         warn "Not having $NODE_PATH set may cause shan to reinstall NPM packages."]
     (cond
       (nil? path)
-      (u/warning "Your NODE_PATH is not set.\n" warn)
+      (u/warning (str "Your NODE_PATH is not set.\n" warn))
 
       (not (.exists (io/file path)))
-      (u/warning "Your NODE_PATH does not exist.\n" warn)
+      (u/warning (str "Your NODE_PATH does not exist.\n" warn))
 
       :else path)))
 

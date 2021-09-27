@@ -20,8 +20,6 @@
 (defn read-edn [file-name]
   (-> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read))
 
-(read-edn c/temp-file)
-
 (defn write-edn [file-name edn]
   (pprint edn (clojure.java.io/writer file-name)))
 
