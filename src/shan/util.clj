@@ -18,10 +18,18 @@
 (defn error [arg]     (println (-> "Error:" red bold) arg))
 
 (defn read-edn [file-name]
-  (-> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read))
+  (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read
+       (reduce-kv #(assoc %1 %2 (if (keyword? %3) %3 (mapv symbol %3))) {})
+       (into {})))
 
 (defn write-edn [file-name edn]
-  (pprint edn (clojure.java.io/writer file-name)))
+  (pprint
+   (reduce-kv #(assoc %1 %2 (if (keyword? %3) %3
+                                (mapv (fn [v] (if (= (first (str v)) \@)
+                                                (str v) v)) %3)))
+              {}
+              edn)
+   (io/writer file-name)))
 
 (defn get-new []
   (read-edn c/conf-file))
