@@ -6,7 +6,7 @@ Shan is a declarative wrapper around your favourite package manager.
 - Simple: shan harnesses existing package managers to do the heavy lifting
 - Declarative: sync to your config or let shan build it for you
 - Wide support: shan supports tons of package managers out of the box
-- Extensible: your package manager not supported? Add it ~15 lines of code
+- Extensible: your package manager not supported? Add it in ~3 lines of code
 - Fast: shan is compiled using GraalVM to make it super fast - no JVM here.
 
 **NOTE:** Shan still isn't at 1.0 release, and as of now, it in fact does _not_ 
@@ -181,11 +181,21 @@ shan doesn't support every package manager, but I would love it to! If you're
 interested in adding a package manager, you can request it get added in an issue,
 but adding one yourself is very simple.
 
-1. Copy `src/shan/managers/yay.clj` to a new file
-2. Replace the `yay` with the name of the package manager you'd like to add.
-3. At the top line of the file, again replace `yay` with the package manager.
-4. In the `install` function, replace the command with the command you'd use to install using your package manager.
-5. Do the same with the `installed?` and `delete` functions.
+1. Open `src/shan/managers/managers.clj`
+2. In the `package-managers` map at the top of the file, add a new entry for
+   your package manager. Each value is a map, with 3 entries: `:install`, 
+   `:remove`, and `:installed?`.
+   1. For the `:install` value, put the command to install a package with your package manager.
+   2. For the `:remove` value, put the command to remove a package.
+   3. For the `:installed?` value, put the command to check if a package is locally installed.
+   
+Example:
+
+```clojure
+{:pip {:install "python -m pip install"
+       :remove "python -m pip uninstall -y"
+       :installed? "python -m pip show"}}
+```
 
 Questions? Put up an issue or make a PR with what you've got so far.
 

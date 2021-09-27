@@ -112,7 +112,7 @@
   ([remove-map] (remove-from-new (get-new) remove-map))
   ([config remove-map] (write-edn c/conf-file (remove-from-config config remove-map))))
 
-(defn install-all [pkgs install-fn installed? verbose?]
+(defn install-all [pkgs install-fn installed?]
   (->>
    ;; Put it into a set first to avoid doing the same thing multiple times
    (into #{} pkgs)
@@ -125,14 +125,12 @@
              (do
                (print (str "Installing " (bold p) "... "))
                (flush)
-               (let [out (install-fn (str p))]
-                 (when verbose?
-                   (println "\n" (:out out)))
-                 (if (= (:exit out) 0)
+               (let [out (install-fn p)]
+                 (if out
                    (do (-> "Successfully installed!" green println) p)
                    (-> "Failed to install" red println)))))))))
 
-(defn delete-all [pkgs delete-fn installed? verbose?]
+(defn delete-all [pkgs delete-fn installed?]
   (->>
    ;; Avoid doing the same thing twice
    (into #{} pkgs)
@@ -147,9 +145,6 @@
            (-> (str "Uninstalling " p "... ") bold print)
            (flush)
            (let [out (delete-fn (str p))]
-             (when verbose?
-               (println "\n" (:out out)))
-             (if (= (:exit out) 0)
-               (-> "Successfully uninstalled!" green println)
-               (-> "Failed to uninstall" red println))
-             (into {:package p} out))))))
+             (if out
+               (do (-> "Successfully uninstalled!" green println) p)
+               (-> "Failed to uninstall" red println)))))))
