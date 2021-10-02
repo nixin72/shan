@@ -1,4 +1,4 @@
-(ns shan.managers.managers
+(ns shan.managers
   (:require
    [clojure.string :as str]
    [clojure.java.shell :as shell]
@@ -83,4 +83,4 @@
        (if (installed? pkg)
          (conj a k) a)))
    []
-   package-managers))
+   installed-managers))

@@ -1,6 +1,7 @@
 (ns shan.help
-  (:require [clojure.string :as str]
-            [shan.util :as u]))
+  (:require
+   [clojure.string :as str]
+   [shan.util :as u]))
 
 (defn build-name [cmd subcmd desc]
   (str "\n" (u/bold "NAME:") "\n " cmd (if subcmd (str " " subcmd) "") " - " desc "\n"))

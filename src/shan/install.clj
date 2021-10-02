@@ -1,7 +1,7 @@
 (ns shan.install
   (:require
    [shan.util :as u]
-   [shan.managers.managers :as pm]))
+   [shan.managers :as pm]))
 
 (defn generate-success-report [result]
   (reduce-kv (fn [a k v]

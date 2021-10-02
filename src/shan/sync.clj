@@ -2,7 +2,7 @@
   (:require
    [clojure.data :as data]
    [shan.util :as u]
-   [shan.managers.managers :as pm]))
+   [shan.managers :as pm]))
 
 (defn sync-conf [{:keys [verbose]}]
   (let [old-config (u/get-old)

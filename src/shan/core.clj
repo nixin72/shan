@@ -8,7 +8,7 @@
    [shan.rollback :as rollback]
    [shan.sync :as sync]
    [shan.help :as help]
-   [shan.managers.managers :as pm]
+   [shan.managers :as pm]
    [shan.util :as u])
   (:gen-class))
 

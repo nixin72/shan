@@ -1,14 +1,14 @@
 (ns shan.install-test
   (:require
    [clojure.test :refer [deftest testing is]]
-   [shan.macros :refer [suppress-stdout with-test-data]]
+   [shan.macros :refer [suppress-stdout suppress-side-effects with-test-data]]
    [shan.util :as u]
    [shan.install :as in]))
 
 ;;;;;;;;;;; test-generate-success-report ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(deftest test-generate-test-report
-  (println "Testing function" (u/bold "install/generate-test-report"))
+(deftest test-generate-success-report
+  (println "Testing function" (u/bold "install/generate-success-report"))
 
   (suppress-stdout
    (testing "Test empty results"
@@ -60,12 +60,10 @@
 ;; generated it's probably not a problem with shan.
 
 ;;;;;;;;;;; test-cli-install ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 (deftest test-cli-install
   (println "Testing function" (u/bold "install/cli-install"))
 
-  (suppress-stdout
+  (suppress-side-effects
    (testing "Test installing a single known package"
      (is (= (with-test-data
               (in/cli-install {:_arguments ["micro"]}))

@@ -25,8 +25,13 @@
   `(with-redefs [clojure.java.shell/sh (fn [& xs#] xs#)
                  clojure.pprint/pprint (fn [& xs#] xs#)]
      (binding [*out* *out*]
-       (set! *out* (clojure.java.io/writer "/dev/null"))
+       (set! *out* (io/writer "/dev/null" :append true))
        ~@body)))
+
+(defmacro suppress-state-changes [& body]
+  `(with-redefs [clojure.java.shell/sh (fn [& xs#] {:exit 0 :out xs#})
+                 clojure.pprint/pprint (fn [& xs#] xs#)]
+     ~@body))
 
 (defmacro with-test-data [& body]
   `(binding [shan.config/home (str (System/getProperty "user.dir") "/.test")]

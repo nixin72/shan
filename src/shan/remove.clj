@@ -3,7 +3,7 @@
    [clojure.java.shell]
    [clojure.string :as str]
    [shan.util :as u]
-   [shan.managers.managers :as pm]))
+   [shan.managers :as pm]))
 
 (defn remove-with-pm-from-list [pms pkg]
   (try
