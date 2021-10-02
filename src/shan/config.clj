@@ -17,7 +17,7 @@
 (def appdata "AppData/Local/")
 
 (def OS (System/getProperty "os.name"))
-(def unix? (some #{"Linux" "Mac OS X"} OS))
+(def unix? (some #{OS} #{"Linux" "Mac OS X"}))
 (def windows? (not unix?))
 
 (def ^:dynamic gen-dir
