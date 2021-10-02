@@ -11,14 +11,16 @@
    (spit file-path contents)
    (println "Creating file: " file-path)))
 
-(def home (str (System/getenv "HOME") "/"))
+(def ^:dynamic home (str (System/getenv "HOME") "/"))
 (def local ".local/share/")
 (def config ".config/")
 (def appdata "AppData/Local/")
 
 (def OS (System/getProperty "os.name"))
+(def unix? (some #{"Linux" "Mac OS X"} OS))
+(def windows? (not unix?))
 
-(def gen-dir
+(def ^:dynamic gen-dir
   (case OS
     ("Linux" "Mac OS X")
     (let [dir (str home local "shan/")]
@@ -32,7 +34,7 @@
         (-> dir java.io.File. .mkdir))
       dir)))
 
-(def conf-dir
+(def ^:dynamic conf-dir
   (case OS
     ("Linux" "Mac OS X")
     (cond
@@ -53,9 +55,9 @@
       (do (create-file (str home appdata "shan.edn"))
           (str home appdata)))))
 
-(def conf-file (str conf-dir "shan.edn"))
-(def temp-file (str gen-dir "temporary.edn"))
-(def gen-file (str gen-dir "generations.edn"))
+(def ^:dynamic conf-file (str conf-dir "shan.edn"))
+(def ^:dynamic temp-file (str gen-dir "temporary.edn"))
+(def ^:dynamic gen-file (str gen-dir "generations.edn"))
 
 (when-not (file-exists? temp-file)
   (create-file temp-file))

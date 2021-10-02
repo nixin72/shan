@@ -1,5 +1,6 @@
 (ns shan.remove
   (:require
+   [clojure.java.shell]
    [clojure.string :as str]
    [shan.util :as u]
    [shan.managers.managers :as pm]))
@@ -18,14 +19,16 @@
         {pm [pkg]}
         (reduce #(assoc %1 %2 [pkg]) {} pms)))
     (catch java.lang.NumberFormatException _
-      (u/error "Please enter a number"))))
+      (u/error "Please enter a number")
+      (remove-with-pm-from-list pms pkg))))
 
 (defn remove-with-pm-from-installed [pkg]
   (let [pms (pm/installed-with pkg)]
     (cond
       (= (count pms) 0)
-      (u/warning (str "Package '" (u/bold pkg)
-                      "' isn't installed in any package manager known by Shan."))
+      (do (u/warning (str "Package '" (u/bold pkg)
+                          "' isn't installed in any package manager known by Shan."))
+          {})
 
       (= (count pms) 1) {(first pms) [pkg]}
       :else (remove-with-pm-from-list pms pkg))))
@@ -44,12 +47,15 @@
 
 (defn cli-remove [{:keys [verbose temp _arguments]}]
   (let [conf (if temp (u/get-temp) (u/get-new))
-        delete-map (u/flat-map->map _arguments :default)
-        default (find-package-manager (dissoc conf :default)
-                                      (:default delete-map))
-        delete-map (dissoc delete-map :default)
-        delete-map (u/merge-conf default delete-map)]
-    (reduce-kv #(assoc %1 %2 (pm/delete %2 %3 verbose)) {} delete-map)
+        remove-map (u/flat-map->map _arguments :default)
+        default (find-package-manager (dissoc conf :default-manager)
+                                      (:default remove-map))
+        remove-map (dissoc remove-map :default)
+        remove-map (u/merge-conf default remove-map)
+        out (reduce-kv #(assoc %1 %2 (pm/remove-pkgs %2 %3 verbose))
+                       {}
+                       remove-map)]
     (if temp
-      (u/remove-from-temp conf delete-map)
-      (u/remove-from-new conf delete-map))))
+      (u/remove-from-temp conf remove-map)
+      (u/remove-from-conf conf remove-map))
+    out))

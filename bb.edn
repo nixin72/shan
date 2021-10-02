@@ -5,13 +5,19 @@
                                             "Windows"))
             (def jar-name "shan.jar"))
 
-  clean (shell "rm -rf .cpcache target shan shan.build_artifacts.txt shan.jar")
+  clean {:doc "Clean the project"
+         :task (shell "rm -rf .cpcache target shan shan.build_artifacts.txt shan.jar")}
+
   main {:doc "Run main"
+        :extra-paths ["test"]
         :task (apply clojure "-M -m shan.core" *command-line-args*)}
 
+  test {:doc "Run tests"
+        :task (clojure "-M -m shan.core-test")}
+
   uber {:doc "Builds uberjar"
-        :task (when (seq (fs/modified-since jar-name
-                                            ["deps.edn" "build.clj" "src"]))
+        :task (when (seq (fs/modified-since
+                          jar-name ["deps.edn" "build.clj" "src"]))
                 (clojure "-T:build uber"))}
 
   run-uber {:doc "Run uberjar"

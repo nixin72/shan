@@ -14,5 +14,5 @@
     (when-not (= [add del] [nil nil])
       (u/add-generation new-config))
 
-    [(reduce-kv #(assoc %1 %2 (when %3 (pm/install %2 %3 verbose))) {} new-config)
-     (reduce-kv #(assoc %1 %2 (when %3 (pm/delete %2 %3 verbose))) {} del)]))
+    [(reduce-kv #(assoc %1 %2 (when %3 (pm/install-pkgs %2 %3 verbose))) {} new-config)
+     (reduce-kv #(assoc %1 %2 (when %3 (pm/remove-pkgs %2 %3 verbose))) {} del)]))

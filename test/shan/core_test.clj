@@ -1,7 +1,9 @@
 (ns shan.core-test
-  (:require [clojure.test :refer :all]
-            [shan.core :refer :all]))
+  (:require
+   [clojure.test :refer [run-all-tests]]
+   [shan.util-test]
+   [shan.install-test]
+   [shan.remove-test]))
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+(defn -main [& _]
+  (run-all-tests #"shan\.(util|install|remove)-test"))

@@ -6,14 +6,14 @@
    [shan.util :as u]))
 
 (def package-managers
-  {:brew {:install "brew install"
-          :remove "brew uninstall"
-          :installed? "brew list"}
+  {;; :brew {:install "brew install"
+   ;;        :remove "brew uninstall"
+   ;;        :installed? "brew list"}
    :yay {:install "yay -S --noconfirm"
          :remove "yay -R --noconfirm"
          :installed? "yay -Q"}
    :npm {:install "npm install --global"
-         :remove "npm uninstall --gloabl"
+         :remove "npm uninstall --global"
          :installed? npm/installed?}
    :pip {:install "python -m pip install"
          :remove "python -m pip uninstall -y"
@@ -31,23 +31,23 @@
                            (println "\n" out))
                          (= 0 (:exit out)))))
 
-(defn install [manager pkgs verbose?]
+(defn install-pkgs [manager pkgs verbose?]
   (let [pm (get package-managers manager)
         {:keys [install installed?]} pm]
     (println "Installing" (u/bold (name manager)) "packages:")
     (let [out (u/install-all
                pkgs (make-fn install verbose?) (make-fn installed? verbose?))]
       (println "")
-      out)))
+      (zipmap (map #(str install " " %) pkgs) out))))
 
-(defn delete [manager pkgs verbose?]
+(defn remove-pkgs [manager pkgs verbose?]
   (let [pm (get package-managers manager)
         {:keys [remove installed?]} pm]
     (println "Uninstalling" (u/bold (name manager)) "packages:")
-    (let [out (u/delete-all
+    (let [out (u/remove-all
                pkgs (make-fn remove verbose?) (make-fn installed? verbose?))]
       (println "")
-      out)))
+      (zipmap (map #(str remove " " %) pkgs) out))))
 
 (defn installed-with [pkg]
   (reduce-kv
