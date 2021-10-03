@@ -10,6 +10,12 @@
   {:brew {:install "brew install"
           :remove "brew uninstall"
           :installed? "brew list"}
+   :paru {:install "paru -S --noconfirm"
+          :remove "paru -R --noconfirm"
+          :installed? "paru -Q"}
+   :pacman {:install "sudo pacman -S --noconfirm"
+            :remove "sudo pacman -R --noconfirm"
+            :installed? "sudo pacman -Q"}
    :yay {:install "yay -S --noconfirm"
          :remove "yay -R --noconfirm"
          :installed? "yay -Q"}
