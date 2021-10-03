@@ -10,6 +10,15 @@
   {:brew {:install "brew install"
           :remove "brew uninstall"
           :installed? "brew list"}
+   :choco {:install "choco install",
+           :remove "choco uninstall",
+           :installed? "choco list --local-only"}
+   :scoop {:install "scoop install"
+           :remove "scoop uninstall"
+           :installed? "scoop info"}
+   :winget {:install "winget install"
+            :remove "winget uninstall"
+            :installed? "winget list --exact"}
    :paru {:install "paru -S --noconfirm"
           :remove "paru -R --noconfirm"
           :installed? "paru -Q"}
