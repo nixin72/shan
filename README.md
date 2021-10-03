@@ -11,16 +11,16 @@ Shan is a declarative wrapper around your favourite package manager.
 
 **NOTE:** Shan still isn't at 1.0 release, and as of now, it in fact does _not_ 
 support tons of package managers. My goal is, as of 1.0, to support:
-- dpkg
-- yay
-- paru
-- dnf
-- brew
-- chocolatey
-- winget
-- npm
-- pip
-- Gems
+- [ ] dpkg
+- [x] yay
+- [x] paru
+- [ ] dnf
+- [x] brew
+- [ ] chocolatey
+- [ ] winget
+- [x] npm
+- [x] pip
+- [x] Gems
 
 ## Table of Contents
 - [Why use shan?](#why-shan)
