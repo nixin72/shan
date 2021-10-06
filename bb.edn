@@ -32,12 +32,15 @@
 
   native {:doc "Builds native image"
           :depends [graalvm uber]
-          :task (shell (str (fs/file graalvm
-                                     "bin"
-                                     (if windows?
-                                       "native-image.cmd"
-                                       "native-image")))
+          :task (apply shell (str (fs/file graalvm
+                                           "bin"
+                                           (if windows?
+                                             "native-image.cmd"
+                                             "native-image")))
                        "-jar" jar-name
                        "--no-fallback"
                        "-H:ReflectionConfigurationFiles=reflect-config.json"
-                       "-H:Name=shan")}}}
+                       "-H:Name=shan"
+                       "-H:+ReportExceptionStackTraces"
+                       "--trace-object-instantiation=java.lang.Thread"
+                       *command-line-args*)}}}

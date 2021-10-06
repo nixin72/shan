@@ -39,13 +39,13 @@
          :installed? "gem list -lie"}})
 
 (def installed-managers
-  (reduce-kv (fn [a k v]
-               (if (if c/windows?
-                     (= 0 (:exit (shell/sh "cmd" "/C" "where" (name k))))
-                     (= 0 (:exit (shell/sh "which" (name k)))))
-                 (assoc a k v)
-                 a))
-             {} package-managers))
+  #(reduce-kv (fn [a k v]
+                (if (if c/windows?
+                      (= 0 (:exit (shell/sh "cmd" "/C" "where" (name k))))
+                      (= 0 (:exit (shell/sh "which" (name k)))))
+                  (assoc a k v)
+                  a))
+              {} package-managers))
 
 (defn make-fn [command verbose?]
   (cond
@@ -66,7 +66,8 @@
                 "If it is in your path and this still isn't working, please make an issue on our GitHub repository.")))
 
 (defn install-pkgs [manager pkgs verbose?]
-  (let [pm (get installed-managers manager)]
+  (let [pm (get (installed-managers) manager)]
+    (prn (installed-managers))
     (if (nil? pm)
       (if (contains? package-managers manager)
         (unavailable-package-manager manager)
@@ -79,7 +80,7 @@
         (zipmap (map #(str install " " %) pkgs) out)))))
 
 (defn remove-pkgs [manager pkgs verbose?]
-  (let [pm (get package-managers manager)]
+  (let [pm (get (installed-managers) manager)]
     (if (nil? pm)
       (if (contains? package-managers manager)
         (unavailable-package-manager manager)
@@ -98,4 +99,4 @@
        (if (installed? pkg)
          (conj a k) a)))
    []
-   installed-managers))
+   (installed-managers)))

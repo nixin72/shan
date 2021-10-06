@@ -42,7 +42,7 @@
    [{:command "sync"
      :short "sc"
      :description "Syncs your config to your installed packages."
-     :runs sync/sync-conf
+     :runs sync/cli-sync
      :opts [verbose?]}
     {:command "rollback"
      :short "rb"
