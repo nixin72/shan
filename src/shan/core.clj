@@ -8,7 +8,6 @@
    [shan.rollback :as rollback]
    [shan.sync :as sync]
    [shan.help :as help]
-   [shan.managers :as pm]
    [shan.util :as u])
   (:gen-class))
 
@@ -41,6 +40,7 @@
    :subcommands
    [{:command "sync"
      :short "sc"
+     :arguments? false
      :description "Syncs your config to your installed packages."
      :runs sync/cli-sync
      :opts [verbose?]}
@@ -50,6 +50,7 @@
      :runs rollback/cli-rollback}
     {:command "install"
      :short "in"
+     :arguments? true
      :description "Install packages through any supported package manager."
      :examples [context
                 {:desc (str "Install packages through " (u/blue "yay") ", this config's default package manager")
@@ -62,6 +63,7 @@
      :opts [verbose? temporary?]}
     {:command "remove"
      :short "rm"
+     :arguments? true
      :description "Uninstall packages through any supported package manager."
      :examples [context
                 {:desc "Removes the packages through yay"
@@ -76,19 +78,24 @@
      :opts [verbose? temporary?]}
     {:command "list"
      :short "ls"
+     :arguments? false
      :description "Lists all of the packages installed through Shan."
      :runs list/cli-list
      :opts [temporary?]}
     {:command "edit"
      :short "ed"
      :description "Shells out to $EDITOR for you to edit your config"
-     :runs edit/cli-edit}]
-   :package-managers pm/package-managers})
+     :runs edit/cli-edit}]})
 
 (defn -main [& args]
-  (let [result (try (run-cmd args opts)
-                    (catch clojure.lang.ExceptionInfo _
-                      (run-cmd ["--help"] opts)))]
+  (let [result
+        (try
+          (case (first args)
+            ;; If it looks like the user is trying to get help, help them
+            ("h" "help" "-h" "doc" "docs" "info" "?") (run-cmd ["--help"] opts)
+            (run-cmd args opts))
+          (catch clojure.lang.ExceptionInfo _
+            (run-cmd ["--help"] opts)))]
     (when (= result [{} {}])
       (println "No changes made."))
     (shutdown-agents)))

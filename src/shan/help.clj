@@ -7,13 +7,14 @@
 (defn build-name [cmd subcmd desc]
   (str "\n" (u/bold "NAME:") "\n " cmd (if subcmd (str " " subcmd) "") " - " desc "\n"))
 
-(defn build-usage [cmd long short options?]
+(defn build-usage [cmd long short options? arguments?]
   (str "\n" (u/bold "USAGE:") "\n " cmd " "
        (cond (and long short) (str "[" long "|" short "]")
              long long
              short short) " "
        (and options? "[command-options] ")
-       "[arguments...]\n"))
+       (if arguments? "[arguments...]" "")
+       "\n"))
 
 (defn build-global-usage [cmd]
   (str "\n" (u/bold "USAGE:") "\n " cmd
@@ -64,7 +65,7 @@
                                  (= (:short %) subcommand))
                             (:subcommands setup)))]
     (print (str (build-name cmd subcommand (:description info))
-                (build-usage cmd (:command info) (:short info) (:opts info))
+                (build-usage cmd (:command info) (:short info) (:opts info) (:arguments? info))
                 (if (some #{subcommand} #{"install" "in" "remove" "rm" "sync" "sc"})
                   (build-pms (keys (pm/installed-managers)))
                   "")
