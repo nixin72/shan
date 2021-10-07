@@ -14,5 +14,6 @@ pom.xml.asc
 .lsp/
 .cpcache
 .test
+.clj-kondo
 /shan
 shan.build_artifacts.txt
