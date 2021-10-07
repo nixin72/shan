@@ -5,6 +5,7 @@
    [clojure.pprint :refer [pprint]]
    [clojure.data :as data]
    [clojure.set :as set]
+   [clojure.string :as str]
    [shan.config :as c]))
 
 (defn deserialize [config-map]
@@ -84,6 +85,25 @@
 (defn bold [string]   (str "\033[0;1m"  string normal))
 (defn warning [arg]   (println (-> "Warning:" yellow bold) arg))
 (defn error [arg]     (println (-> "Error:" red bold) arg))
+
+(defn prompt [prompt-string options]
+  (try
+    (println (str prompt-string "\n"
+                  (->> options
+                       (map-indexed (fn [k v] (str "- " (name v) " (" k ")")))
+                       (str/join "\n"))))
+    (or (get options (Integer/parseInt (read-line)))
+        (last options))                 ; Get the last if out of range
+    (catch java.lang.NumberFormatException _
+      (error "Please enter a number from the selection.")
+      (prompt prompt-string options))))
+
+(defn yes-or-no [default & prompt]
+  (println (str (str/join " " prompt) " " (if default "Y/n" "N/y")) " ")
+  (let [input (read-line)]
+    (if (= input "")
+      default
+      (some #{"y" "yes"} [(str/lower-case input)]))))
 
 (defn read-edn [file-name]
   (try

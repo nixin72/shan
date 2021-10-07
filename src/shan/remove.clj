@@ -1,26 +1,14 @@
 (ns shan.remove
   (:require
    [clojure.java.shell]
-   [clojure.string :as str]
    [shan.util :as u]
    [shan.managers :as pm]))
 
 (defn remove-with-pm-from-list [pms pkg]
-  (try
-    (println
-     (str "Which package manager(s) would you like to remove "
-          (u/blue pkg)  " using?\n"
-          (->> (conj pms :all)
-               (map-indexed (fn [k v] (str "- " (name v) " (" k ")")))
-               (str/join "\n"))))
-    (let [which (Integer/parseInt (read-line))
-          pm (get pms which)]
-      (if pm
-        {pm [pkg]}
-        (reduce #(assoc %1 %2 [pkg]) {} pms)))
-    (catch java.lang.NumberFormatException _
-      (u/error "Please enter a number")
-      (remove-with-pm-from-list pms pkg))))
+  (let [pm (u/prompt (str "Which package manager(s) would you like to remove "
+                          (u/blue pkg)  " using?\n")
+                     pms)]
+    (if pm {pm [pkg]} (reduce #(assoc %1 %2 [pkg]) {} pms))))
 
 (defn remove-with-pm-from-installed [pkg]
   (let [pms (pm/installed-with pkg)]

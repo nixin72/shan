@@ -7,45 +7,92 @@
    [shan.util :as u]))
 
 (def package-managers
-  {:brew {:install "brew install"
+  {:brew {:type :system
+          :install "brew install"
           :remove "brew uninstall"
           :installed? "brew list"}
-   :choco {:install "choco install",
+   :choco {:type :system
+           :install "choco install",
            :remove "choco uninstall",
            :installed? "choco list --local-only"}
-   :scoop {:install "scoop install"
+   :scoop {:type :system
+           :install "scoop install"
            :remove "scoop uninstall"
            :installed? "scoop info"}
-   :winget {:install "winget install"
+   :winget {:type :system
+            :install "winget install"
             :remove "winget uninstall"
             :installed? "winget list --exact"}
-   :paru {:install "paru -S --noconfirm"
+   :paru {:type :system
+          :install "paru -S --noconfirm"
           :remove "paru -R --noconfirm"
           :installed? "paru -Q"}
-   :pacman {:install "sudo pacman -S --noconfirm"
+   :pacman {:type :system
+            :install "sudo pacman -S --noconfirm"
             :remove "sudo pacman -R --noconfirm"
             :installed? "sudo pacman -Q"}
-   :yay {:install "yay -S --noconfirm"
+   :yay {:type :system
+         :install "yay -S --noconfirm"
          :remove "yay -R --noconfirm"
          :installed? "yay -Q"}
-   :npm {:install "npm install --global"
+   :npm {:type :language
+         :install "npm install --global"
          :remove "npm uninstall --global"
          :installed? npm/installed?}
-   :pip {:install "python -m pip install"
+   :pip {:type :language
+         :install "python -m pip install"
          :remove "python -m pip uninstall -y"
          :installed? "python -m pip show"}
-   :gem {:install "gem install"
+   :gem {:type :language
+         :install "gem install"
          :remove "gem uninstall -x"
          :installed? "gem list -lie"}})
 
-(def installed-managers
-  #(reduce-kv (fn [a k v]
-                (if (if c/windows?
-                      (= 0 (:exit (shell/sh "cmd" "/C" "where" (name k))))
-                      (= 0 (:exit (shell/sh "which" (name k)))))
-                  (assoc a k v)
-                  a))
-              {} package-managers))
+(defn installed-managers []
+  (let [managers
+        (reduce-kv (fn [a k v]
+                     (if (if c/windows?
+                           (= 0 (:exit (shell/sh "cmd" "/C" "where" (name k))))
+                           (= 0 (:exit (shell/sh "which" (name k)))))
+                       (assoc a k v)
+                       a))
+                   {} package-managers)]
+    (if (empty? managers)
+      (do (u/error "No known package managers available on your system")
+          (System/exit -1))
+      managers)))
+
+;; TODO: Figure out how to test
+(defn determine-default-manager
+  "Try to determine what the default manager should be if there's no
+  :default-manager set and there's no packages installed.
+  1. Find if there's only one system package manager. If so, use it.
+  2. If there's two system package managers, ask for a default.
+  3. If there's no system package managers, prompt for another one."
+  []
+  (let [mans (installed-managers)
+        {:keys [system language]}
+        (reduce-kv (fn [a k v]
+                     (if (= (:type v) :system)
+                       (update a :system conj k)
+                       (update a :language conj k)))
+                   {:system [] :language []}
+                   mans)
+        selected
+        (cond
+          (= (count system) 1) system
+          (> (count system) 1) (u/prompt
+                                (str "Several system package managers were found. "
+                                     "Which one would you like to use?")
+                                system)
+          :else (u/prompt
+                 (str "No system package managers could be found. "
+                      "Which other package manager would you like to use?")
+                 language))
+        set-selected-as-default?
+        (u/yes-or-no
+         true "Would you like to set" (u/bold (name selected)) "as the default package manager?")]
+    [selected set-selected-as-default?]))
 
 (defn make-fn [command verbose?]
   (cond
@@ -67,7 +114,6 @@
 
 (defn install-pkgs [manager pkgs verbose?]
   (let [pm (get (installed-managers) manager)]
-    (prn (installed-managers))
     (if (nil? pm)
       (if (contains? package-managers manager)
         (unavailable-package-manager manager)

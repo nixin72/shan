@@ -6,10 +6,7 @@
   (-> file-path io/file .exists))
 
 (defn create-file
-  ([file-path]
-   (prn "Home" (System/getenv "HOME"))
-   (prn "PWD" (System/getProperty "user.dir"))
-   (create-file file-path "{}"))
+  ([file-path] (create-file file-path "{}"))
   ([file-path contents]
    (-> file-path java.io.File. .createNewFile)
    (spit file-path contents)
