@@ -27,15 +27,15 @@
    :type :with-flag})
 
 (def context
-  (str "Given the following shan.edn config file:\n"
-       (u/red "{") (u/blue ":default :yay") "\n"
-       (u/blue " :yay") " " (u/yellow "[") "nodejs python3 neovim atop" (u/yellow "]") "\n"
-       (u/blue " :npm") " " (u/yellow "[") "atop react" (u/yellow "]") (u/red "}") "\n\n"))
+  (str " Given the following shan.edn config file:\n"
+       (u/red " {") (u/blue ":default-manager :yay") "\n"
+       (u/blue "  :yay") " " (u/yellow "[") "nodejs python3 neovim atop" (u/yellow "]") "\n"
+       (u/blue "  :npm") " " (u/yellow "[") "atop react" (u/yellow "]") (u/red "}") "\n\n"))
 
 (def opts
   {:command "shan"
    :description "A declarative wrapper around your favourite package manager"
-   :version "0.1.0"
+   :version "0.5.0"
    :global-help help/global-help
    :subcmd-help help/subcommand-help
    :subcommands

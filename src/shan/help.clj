@@ -1,7 +1,8 @@
 (ns shan.help
   (:require
    [clojure.string :as str]
-   [shan.util :as u]))
+   [shan.util :as u]
+   [shan.managers :as pm]))
 
 (defn build-name [cmd subcmd desc]
   (str "\n" (u/bold "NAME:") "\n " cmd (if subcmd (str " " subcmd) "") " - " desc "\n"))
@@ -48,7 +49,7 @@
 
 (defn build-pms [managers]
   (str "\n" (u/bold "PACKAGE MANAGERS:") "\n "
-       (str/join ", " (map name managers)) "\n"))
+       (str/join ", " (sort (map name managers))) "\n"))
 
 (defn global-help [conf _]
   (print (str (build-name (:command conf) nil (:description conf))
@@ -65,7 +66,7 @@
     (print (str (build-name cmd subcommand (:description info))
                 (build-usage cmd (:command info) (:short info) (:opts info))
                 (if (some #{subcommand} #{"install" "in" "remove" "rm" "sync" "sc"})
-                  (build-pms (:package-managers setup))
+                  (build-pms (keys (pm/installed-managers)))
                   "")
                 (build-opts (:opts info))
                 (if (:examples info) (build-examples (:examples info)) "")))
