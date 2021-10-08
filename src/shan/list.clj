@@ -5,7 +5,7 @@
 
 (defn cli-list [{:keys [temp _arguments]}]
   (letfn [(print-config [config]
-            (->> (dissoc config :default)
+            (->> (dissoc config :default-manager)
                  (reduce-kv
                   (fn [a k v]
                     (conj a (str (u/bold (name k)) ":\n" (str/join ", " v))))

@@ -124,11 +124,15 @@
         nil))))
 
 (defn get-new []
-  (read-edn c/conf-file))
+  (try
+    (read-edn c/conf-file)
+    (catch java.lang.RuntimeException _
+      {})))
 
 (defn get-temp []
   (try
     (read-edn c/temp-file)
+    (catch java.lang.RuntimeException _ {})
     (catch java.io.FileNotFoundException _
       (-> c/gen-dir java.io.File. .mkdir)
       (-> c/temp-file java.io.File. .createNewFile)
@@ -138,6 +142,7 @@
 (defn get-old []
   (try
     (read-edn c/gen-file)
+    (catch java.lang.RuntimeException _ [{}])
     (catch java.io.FileNotFoundException _
       (-> c/gen-dir java.io.File. .mkdir)
       (-> c/gen-file java.io.File. .createNewFile)
@@ -146,10 +151,18 @@
 
 (defn add-generation [new-conf]
   (try
-    (let [old (conj (get-old) new-conf)
-          num-gens (count old)]
-      (println "Creating generation" num-gens)
+    (let [old (conj (get-old) new-conf)]
       (write-edn c/gen-file old))
+    (catch java.io.FileNotFoundException _
+      (println "Error occured creating a new generation."))))
+
+(defn remove-generation []
+  (try
+    (let [old (pop (get-old))]
+      (prn old (empty? old))
+      (if (empty? old)
+        (write-edn c/gen-file [{}])
+        (write-edn c/gen-file old)))
     (catch java.io.FileNotFoundException _
       (println "Error occured creating a new generation."))))
 
@@ -159,7 +172,10 @@
 
 (defn add-to-conf
   ([install-map] (add-to-conf (get-new) install-map))
-  ([config install-map] (write-edn c/conf-file (merge-conf config install-map))))
+  ([config install-map]
+   (let [gen (merge-conf config install-map)]
+     (add-generation (dissoc gen :default-manager))
+     (write-edn c/conf-file gen))))
 
 (defn remove-from-temp
   ([remove-map] (remove-from-temp (get-temp) remove-map))
@@ -167,7 +183,10 @@
 
 (defn remove-from-conf
   ([remove-map] (remove-from-conf (get-new) remove-map))
-  ([config remove-map] (write-edn c/conf-file (remove-from-config config remove-map))))
+  ([config remove-map]
+   (let [gen (remove-from-config config remove-map)]
+     (add-generation (dissoc gen :default-manager))
+     (write-edn c/conf-file gen))))
 
 (defn install-all [pkgs install-fn installed?]
   (->>

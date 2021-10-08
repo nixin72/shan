@@ -64,4 +64,4 @@
   (create-file temp-file))
 
 (when-not (file-exists? gen-file)
-  (create-file gen-file "[]"))
+  (create-file gen-file "[{}]"))
