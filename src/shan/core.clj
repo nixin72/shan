@@ -82,10 +82,22 @@
      :description "Lists all of the packages installed through Shan."
      :runs list/cli-list
      :opts [temporary?]}
-    {:command "edit"
-     :short "ed"
-     :description "Shells out to $EDITOR for you to edit your config"
-     :runs edit/cli-edit}]})
+    {:command "config"
+     :short "cf"
+     :description "A variety of tools for managing your config."
+     :subcommands
+     [{:command "edit"
+       :short "ed"
+       :description "Shells out to $EDITOR for you to edit your config"
+       :runs edit/cli-edit}
+      {:command "purge"
+       :short "pg"
+       :description "Removes all temporary packages."
+       :runs edit/cli-purge}
+      {:command "merge"
+       :short "mg"
+       :description "Merges all temporary packages into your config file."
+       :runs edit/cli-merge}]}]})
 
 (defn -main [& args]
   (let [result

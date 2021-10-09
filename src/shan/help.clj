@@ -69,6 +69,7 @@
                 (if (some #{subcommand} #{"install" "in" "remove" "rm" "sync" "sc"})
                   (build-pms (keys (pm/installed-managers)))
                   "")
+                (if (:subcommands info) (build-commands (:subcommands info)) "")
                 (build-opts (:opts info))
                 (if (:examples info) (build-examples (:examples info)) "")))
     (flush)))
