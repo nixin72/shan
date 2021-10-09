@@ -28,7 +28,7 @@ support tons of package managers. My goal is, as of 1.0, to support:
   - [Installing packages](#installing-packages)
   - [Removing packages](#removing-packages)
   - [Your config](#your-config)
-  - [Temporary installs](#temporary-installs)
+  - [Temporarily installed packages](#temporary-packages)
 - [Contributing](#contributing)
   - [Adding a package manager](#adding-a-package-manager)
 - [License](#license)
