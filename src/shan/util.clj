@@ -8,6 +8,14 @@
    [clojure.string :as str]
    [shan.config :as c]))
 
+;; https://gist.github.com/edbond/665401
+(defn xor
+  ([] nil)
+  ([_] true)
+  ([a b] (if a
+           (if b false true)
+           (if b true false))))
+
 (defn deserialize [config-map]
   (reduce-kv #(assoc %1 %2 (if (keyword? %3) %3 (mapv symbol %3)))
              {}
@@ -99,7 +107,8 @@
       (prompt prompt-string options))))
 
 (defn yes-or-no [default & prompt]
-  (println (str (str/join " " prompt) " " (if default "Y/n" "N/y")) " ")
+  (print (str (str/join " " prompt) "? " (if default "Y/n" "N/y")) " ")
+  (flush)
   (let [input (read-line)]
     (if (= input "")
       default

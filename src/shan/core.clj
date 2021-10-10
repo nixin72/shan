@@ -8,6 +8,7 @@
    [shan.rollback :as rollback]
    [shan.sync :as sync]
    [shan.help :as help]
+   [shan.init :as init]
    [shan.util :as u])
   (:gen-class))
 
@@ -82,22 +83,23 @@
      :description "Lists all of the packages installed through Shan."
      :runs list/cli-list
      :opts [temporary?]}
-    {:command "config"
-     :short "cf"
-     :description "A variety of tools for managing your config."
-     :subcommands
-     [{:command "edit"
-       :short "ed"
-       :description "Shells out to $EDITOR for you to edit your config"
-       :runs edit/cli-edit}
-      {:command "purge"
-       :short "pg"
-       :description "Removes all temporary packages."
-       :runs edit/cli-purge}
-      {:command "merge"
-       :short "mg"
-       :description "Merges all temporary packages into your config file."
-       :runs edit/cli-merge}]}]})
+    {:command "edit"
+     :short "ed"
+     :description "Shells out to $EDITOR for you to edit your config"
+     :runs edit/cli-edit}
+    {:command "purge"
+     :short "pg"
+     :description "Removes all temporary packages."
+     :runs edit/cli-purge}
+    {:command "merge"
+     :short "mg"
+     :description "Merges all temporary packages into your config file."
+     :runs edit/cli-merge}
+    {:command "gen"
+     :short "ge"
+     :arguments? false
+     :description "Generates a config for first time use from installed packages."
+     :runs init/cli-init}]})
 
 (defn -main [& args]
   (let [result

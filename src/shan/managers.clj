@@ -4,10 +4,13 @@
    [clojure.java.shell :as shell]
    [shan.managers.npm :as npm]
    [shan.config :as c]
+   [shan.managers.list :as list]
    [shan.util :as u]))
 
 (def package-managers
+  ;; TODO: Support MacOS and Windows better
   {:brew {:type :system
+          :list list/brew
           :install "brew install"
           :remove "brew uninstall"
           :installed? "brew list"}
@@ -23,28 +26,34 @@
             :install "winget install"
             :remove "winget uninstall"
             :installed? "winget list --exact"}
+   ;; NOTE: Proper support
    :paru {:type :system
+          :list list/pacman
           :install "paru -S --noconfirm"
           :remove "paru -R --noconfirm"
           :installed? "paru -Q"}
    :pacman {:type :system
+            :list list/pacman
             :install "sudo pacman -S --noconfirm"
             :remove "sudo pacman -R --noconfirm"
             :installed? "sudo pacman -Q"}
    :yay {:type :system
+         :list list/pacman
          :install "yay -S --noconfirm"
          :remove "yay -R --noconfirm"
          :installed? "yay -Q"}
    :npm {:type :language
+         :list list/npm
          :install "npm install --global"
          :remove "npm uninstall --global"
          :installed? npm/installed?}
    :pip {:type :language
+         :list list/pip
          :install "python -m pip install"
          :remove "python -m pip uninstall -y"
          :installed? "python -m pip show"}
    :gem {:type :language
-         :install "gem install"
+         :list list/gem
          :remove "gem uninstall -x"
          :installed? "gem list -lie"}})
 
