@@ -26,3 +26,17 @@
   (let [temp (u/get-temp)]
     (u/add-to-conf temp)
     (spit c/temp-file "{}")))
+
+(defn cli-default [{:keys [_arguments]}]
+  (let [conf (u/get-new)
+        default (first _arguments)]
+    (cond
+      (nil? default)
+      (u/error (str "Argument expected. Use shan default --help for details."))
+
+      (contains? pm/package-managers (keyword default))
+      (u/write-edn c/conf-file (assoc conf :default-manager (keyword default)))
+
+      :else
+      (u/error "Package manager " (u/bold default) " is not known by shan."))
+    @u/exit-code))

@@ -86,6 +86,7 @@
 ;;;;;;;;;;; NOTE: Stateful functions beyond this point ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def exit-code (atom 0))
 (def normal "\033[0m")
 (defn red [string]    (str "\033[0;31m" string normal))
 (defn green [string]  (str "\033[0;32m" string normal))
@@ -94,7 +95,9 @@
 (defn grey [string]   (str "\033[0;37m" string normal))
 (defn bold [string]   (str "\033[0;1m"  string normal))
 (defn warning [arg]   (println (-> "Warning:" yellow bold) arg))
-(defn error [arg]     (println (-> "Error:" red bold) arg))
+(defn error [& arg]
+  (reset! exit-code 1)
+  (println (-> "Error:" red bold) (str/join " " arg)))
 
 (defn prompt [prompt-string options]
   (try
