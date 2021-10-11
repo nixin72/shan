@@ -26,6 +26,20 @@
    :short "t"
    :type :with-flag})
 
+(def editor
+  {:as "Specify an editor to use instead of $EDITOR"
+   :default (System/getenv "EDITOR")
+   :option "editor"
+   :short "e"
+   :type :string})
+
+(def output-format
+  {:as "Specify an output format. Options are human, json, edn, and parseable"
+   :default "human"
+   :option "format"
+   :short "f"
+   :type #{"human" "json" "parseable"}})
+
 (def context
   (str " Given the following shan.edn config file:\n"
        (u/red " {") (u/blue ":default-manager :yay") "\n"
@@ -39,19 +53,9 @@
    :global-help help/global-help
    :subcmd-help help/subcommand-help
    :subcommands
-   [{:command "sync"
-     :short "sc"
-     :arguments? false
-     :description "Syncs your config to your installed packages."
-     :runs sync/cli-sync
-     :opts [verbose?]}
-    {:command "rollback"
-     :short "rb"
-     :description "Roll back your last change."
-     :runs rollback/cli-rollback}
-    {:command "install"
+   [{:command "install"
      :short "in"
-     :arguments? true
+     :arguments? *
      :description "Install packages through any supported package manager."
      :examples [context
                 {:desc (str "Install packages through " (u/blue "yay") ", this config's default package manager")
@@ -64,7 +68,7 @@
      :opts [verbose? temporary?]}
     {:command "remove"
      :short "rm"
-     :arguments? true
+     :arguments? *
      :description "Uninstall packages through any supported package manager."
      :examples [context
                 {:desc "Removes the packages through yay"
@@ -77,39 +81,59 @@
                  :ex (str (u/green "shan") " remove emacs")}]
      :runs remove/cli-remove
      :opts [verbose? temporary?]}
-    {:command "list"
-     :short "ls"
-     :arguments? false
-     :description "Lists all of the packages installed through Shan."
-     :runs list/cli-list
-     :opts [temporary?]}
+    {:command "sync"
+     :short "sc"
+     :arguments? 0
+     :description "Syncs your config to your installed packages."
+     :runs sync/cli-sync
+     :opts [verbose?]}
+    {:command "rollback"
+     :short "rb"
+     :arguments 0
+     :description "Roll back your last change."
+     :runs rollback/cli-rollback}
     {:command "edit"
      :short "ed"
-     :description "Shells out to $EDITOR for you to edit your config"
+     :arguments? 0
+     :description "Shells out to a text editor for you to edit your config"
+     :opts [editor]
      :runs edit/cli-edit}
+    {:command "default"
+     :short "de"
+     :arguments? "<package-manager>"
+     :description "Change the default package manager in your config."
+     :runs edit/cli-default}
     {:command "purge"
      :short "pg"
-     :description "Removes all temporary packages."
+     :arguments? 0
+     :description "Purges all temporary packages from your system."
+     :opts [verbose?]
      :runs edit/cli-purge}
     {:command "merge"
      :short "mg"
+     :arguments? 0
      :description "Merges all temporary packages into your config file."
      :runs edit/cli-merge}
+    {:command "list"
+     :short "ls"
+     :arguments? 0
+     :description "Lists all of the packages installed through Shan."
+     :runs list/cli-list
+     :opts [temporary? output-format]}
     {:command "gen"
      :short "ge"
-     :arguments? false
+     :arguments? 0
      :description "Generates a config for first time use from installed packages."
+     :opts [editor]
      :runs init/cli-init}]})
 
 (defn -main [& args]
-  (let [result
-        (try
-          (case (first args)
-            ;; If it looks like the user is trying to get help, help them
-            ("h" "help" "-h" "doc" "docs" "info" "?") (run-cmd ["--help"] opts)
-            (run-cmd args opts))
-          (catch clojure.lang.ExceptionInfo _
-            (run-cmd ["--help"] opts)))]
-    (when (= result [{} {}])
-      (println "No changes made."))
-    (shutdown-agents)))
+  (try
+    (case (first args)
+      ;; If it looks like the user is trying to get help, help them
+      ("h" "help" "-h" "doc" "docs" "info" "?") (run-cmd ["--help"] opts)
+      ;; Otherwise, just do what they want
+      (run-cmd args opts))
+    (catch clojure.lang.ExceptionInfo _
+      (run-cmd ["--help"] opts)))
+  (shutdown-agents))

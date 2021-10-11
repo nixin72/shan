@@ -13,12 +13,16 @@
              long long
              short short) " "
        (and options? "[command-options] ")
-       (if arguments? "[arguments...]" "")
+       (cond
+         (= arguments? *) "[arguments...]"
+         (vector? arguments?) (str "[" (first arguments?) "]")
+         (string? arguments?) arguments?
+         :else "")
        "\n"))
 
 (defn build-global-usage [cmd]
   (str "\n" (u/bold "USAGE:") "\n " cmd
-       " [global-options] command [command-options] [arguments...]\n"))
+       " command [global-options] [command-options] [arguments...]\n"))
 
 (defn build-version [version]
   (str "\n" (u/bold "VERSION:") "\n " version "\n"))
