@@ -8,25 +8,27 @@
    [clojure.string :as str]
    [shan.config :as c]))
 
-;; https://gist.github.com/edbond/665401
-(defn xor
-  ([] nil)
-  ([_] true)
-  ([a b] (if a
-           (if b false true)
-           (if b true false))))
-
 (defn deserialize [config-map]
-  (reduce-kv #(assoc %1 %2 (if (keyword? %3) %3 (mapv symbol %3)))
-             {}
-             config-map))
+  (reduce-kv
+   #(assoc %1 %2 (cond
+                   (keyword? %3) %3
+                   (map? %3) (reduce-kv (fn [a k v] (assoc a (symbol k) v)) {} %3)
+                   (vector? %3) (mapv symbol %3)))
+   {}
+   config-map))
 
 (defn serialize [config-map]
-  (reduce-kv #(assoc %1 %2 (if (keyword? %3) %3
-                               (mapv (fn [v] (if (= (first (str v)) \@)
-                                               (str v) v)) %3)))
-             {}
-             config-map))
+  (reduce-kv
+   #(assoc %1 %2 (cond
+                   (keyword? %3) %3
+                   (map? %3)
+                   (reduce-kv
+                    (fn [a k v] (assoc a (if (= (first (str k)) \@) (str k) k) v))
+                    {} %3)
+                   (vector? %3)
+                   (mapv (fn [v] (if (= (first (str v)) \@) (str v) v)) %3)))
+   {}
+   config-map))
 
 (defn do-merge [conf1 conf2]
   (reduce-kv (fn [a k v]
