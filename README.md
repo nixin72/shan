@@ -50,6 +50,14 @@ managers you're using.
 
 ## Usage
 
+All the commands available at the moment are:
+  install, add-repo
+  remove, del-repo
+  sync, rollback
+  edit, default
+  purge, merge
+  list, gen
+
 ### Installing packages
 Installing packages with shan is easily done through the `install` or `in` 
 subcommand. 
@@ -138,16 +146,28 @@ One thing that's very useful to have specified in your config is a default
 package manager. Without this specified, you will need to specify a package 
 manager for everything you install. 
 ``` clojure
-{:default :yay
+{:default-manager :yay
  :yay [vim]}
 ```
-Having a `default` key in your config specifies which package manager shan should
-use when none are specified.
+Having a `default-manager` key in your config specifies which package manager 
+shan should use when none are specified.
 
 You can set a default package manager using
 ``` sh
 shan default <package-manager>
 ```
+
+You can also tell shan which packages you'd like to be installed using the 
+default package manager, whatever that may be. For example, you can do:
+
+``` clojure
+{:default [fzf tldr]
+ :brew [node]
+ :paru [nodejs]}
+```
+And you can have `fzf` and `tldr` installed with your default package manager 
+without repeating it through your config. Nodejs though has a different package 
+name in brew and paru, so it needs to have a different name.
 
 ### Temporary packages
 Sometimes you want to quickly install a package to test it out, but you don't 
@@ -165,10 +185,18 @@ of your config. For example if you want to uninstall everything temporary, you
 can simply do
 
 ``` sh
-shan config purge
+shan purge
 ```
 And shan will delete everything temporarily installed. To protect you from 
 accidentally purging your actual config, you can only purge your temporary one.
+
+In addition to purging your temporary files, you can also *merge* your list of 
+temporary packages with your config. This will take all packages installed 
+temporarily and add them to your `shan.edn` file.
+
+``` sh
+shan merge
+```
 
 ## Contributing
 
