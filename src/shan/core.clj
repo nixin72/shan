@@ -9,6 +9,7 @@
    [shan.sync :as sync]
    [shan.help :as help]
    [shan.init :as init]
+   [shan.repo :as repo]
    [shan.util :as u])
   (:gen-class))
 
@@ -66,6 +67,12 @@
                  :ex (str (u/green "shan") " install open-jdk vscode " (u/blue ":npm") " react-native expo " (u/blue ":pip") " PyYAML")}]
      :runs install/cli-install
      :opts [verbose? temporary?]}
+    {:command "add-ppa"
+     :short "ap"
+     :arguments *
+     :description "Adds package archives for your package managers to use."
+     :runs repo/cli-add-ppa
+     :opts [verbose? temporary?]}
     {:command "remove"
      :short "rm"
      :arguments? *
@@ -80,6 +87,12 @@
                 {:desc "Removes emacs after searching to find out what installed it."
                  :ex (str (u/green "shan") " remove emacs")}]
      :runs remove/cli-remove
+     :opts [verbose? temporary?]}
+    {:command "del-ppa"
+     :short "dp"
+     :arguments *
+     :description "Removes package archives from your package managers."
+     :runs repo/cli-del-ppa
      :opts [verbose? temporary?]}
     {:command "sync"
      :short "sc"
@@ -135,5 +148,4 @@
       ;; Otherwise, just do what they want
       (run-cmd args opts))
     (catch clojure.lang.ExceptionInfo _
-      (run-cmd ["--help"] opts)))
-  (shutdown-agents))
+      (run-cmd ["--help"] opts))))

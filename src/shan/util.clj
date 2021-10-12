@@ -220,6 +220,19 @@
                    (do (-> "Successfully installed!" green println) p)
                    (-> "Failed to install" red println)))))))))
 
+(defn add-all-archives [archives add-fn]
+  (->>
+   (into #{} archives)
+   (mapv (fn [a]
+           (-> (str "Adding " a "... ") bold print)
+           (flush)
+           (when-not (nil? a)
+             (let [out (add-fn (str a))]
+               (println out)
+               (if out
+                 (or (-> "Successfully added!" green println) a)
+                 (-> "Failed to add." red println))))))))
+
 (defn remove-all [pkgs remove-fn installed?]
   (->>
    ;; Avoid doing the same thing twice

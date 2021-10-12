@@ -14,6 +14,12 @@
           :install "brew install"
           :remove "brew uninstall"
           :installed? "brew list"}
+   :apt {:type :system
+         :pre-install "apt update"
+         :install "apt install"
+         :add-ppa "add-apt-repository"
+         :remove "apt remove"
+         :installed? "apt list"}
    :choco {:type :system
            :install "choco install",
            :remove "choco uninstall",
@@ -121,31 +127,42 @@
                 "If it is, please ensure that it's available in your $PATH.\n"
                 "If it is in your path and this still isn't working, please make an issue on our GitHub repository.")))
 
+(defmacro with-package-manager [[manager-details package-manager] & body]
+  `(let [~manager-details (get (installed-managers) ~package-manager)]
+     (if (nil? ~manager-details)
+       (if (contains? package-managers ~manager-details)
+         (unavailable-package-manager ~package-manager)
+         (unknown-package-manager ~package-manager))
+       (do ~@body))))
+
 (defn install-pkgs [manager pkgs verbose?]
-  (let [pm (get (installed-managers) manager)]
-    (if (nil? pm)
-      (if (contains? package-managers manager)
-        (unavailable-package-manager manager)
-        (unknown-package-manager manager))
-      (let [{:keys [install installed?]} pm
-            _ (println "Installing" (u/bold (name manager)) "packages:")
-            out (u/install-all
-                 pkgs (make-fn install verbose?) (make-fn installed? verbose?))]
-        (println "")
-        (zipmap (map #(str install " " %) pkgs) out)))))
+  (with-package-manager [pm manager]
+    (when (contains? pm :pre-install)
+      (apply (make-fn (:pre-install pm) verbose?)))
+
+    (println "Installing" (u/bold (name manager)) "packages:")
+    (let [{:keys [install installed?]} pm
+          out (u/install-all
+               pkgs (make-fn install verbose?) (make-fn installed? verbose?))]
+      (println "")
+      (zipmap (map #(str install " " %) pkgs) out))))
+
+(defn add-archives [manager ppas verbose?]
+  (with-package-manager [pm manager]
+    (println "Adding package archives for:" (u/bold (name manager)))
+    (let [{:keys [add-ppas]} pm
+          out (u/add-ppas ppas (make-fn add-ppas verbose?))]
+      (println "")
+      (zipmap (map #(str add-ppas " " %) ppas) out))))
 
 (defn remove-pkgs [manager pkgs verbose?]
-  (let [pm (get (installed-managers) manager)]
-    (if (nil? pm)
-      (if (contains? package-managers manager)
-        (unavailable-package-manager manager)
-        (unknown-package-manager manager))
-      (let [{:keys [remove installed?]} pm
-            _ (println "Uninstalling" (u/bold (name manager)) "packages:")
-            out (u/remove-all
-                 pkgs (make-fn remove verbose?) (make-fn installed? verbose?))]
-        (println "")
-        (zipmap (map #(str remove " " %) pkgs) out)))))
+  (with-package-manager [pm manager]
+    (let [{:keys [remove installed?]} pm
+          _ (println "Uninstalling" (u/bold (name manager)) "packages:")
+          out (u/remove-all
+               pkgs (make-fn remove verbose?) (make-fn installed? verbose?))]
+      (println "")
+      (zipmap (map #(str remove " " %) pkgs) out))))
 
 (defn installed-with [pkg]
   (reduce-kv

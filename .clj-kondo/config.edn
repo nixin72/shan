@@ -1,0 +1,1 @@
+{:lint-as {shan.managers/with-package-manager clojure.core/let}}
