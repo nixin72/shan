@@ -27,4 +27,5 @@
       (let [conf (u/get-temp)]
         (if (= conf {})
           (config-empty)
-          (print-config conf))))))
+          (print-config conf))))
+    (u/exit-code)))

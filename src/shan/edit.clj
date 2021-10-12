@@ -12,7 +12,8 @@
       (.redirectOutput inherit)
       (.redirectError inherit)
       (.redirectInput inherit))
-    (.waitFor (.start process))))
+    (.waitFor (.start process)))
+  u/exit-code)
 
 (defn cli-purge [{:keys [verbose]}]
   (let [remove-map (u/get-temp)
@@ -20,12 +21,13 @@
                           {}
                           remove-map)]
     (spit c/temp-file "{}")
-    result))
+    (if c/testing? result u/exit-code)))
 
 (defn cli-merge [{:keys []}]
   (let [temp (u/get-temp)]
     (u/add-to-conf temp)
-    (spit c/temp-file "{}")))
+    (spit c/temp-file "{}")
+    (if c/testing? temp u/exit-code)))
 
 (defn cli-default [{:keys [_arguments]}]
   (let [conf (u/get-new)
@@ -39,4 +41,4 @@
 
       :else
       (u/error "Package manager " (u/bold default) " is not known by shan."))
-    @u/exit-code))
+    (if c/testing? default @u/exit-code)))

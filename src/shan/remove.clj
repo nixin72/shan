@@ -2,6 +2,7 @@
   (:require
    [clojure.java.shell]
    [shan.util :as u]
+   [shan.config :as c]
    [shan.managers :as pm]))
 
 (defn remove-with-pm-from-list [pms pkg]
@@ -46,4 +47,4 @@
     (if temp
       (u/remove-from-temp conf remove-map)
       (u/remove-from-conf conf remove-map))
-    out))
+    (if c/testing? out u/exit-code)))

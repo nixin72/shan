@@ -138,7 +138,7 @@
 (defn install-pkgs [manager pkgs verbose?]
   (with-package-manager [pm manager]
     (when (contains? pm :pre-install)
-      (apply (make-fn (:pre-install pm) verbose?)))
+      (apply (make-fn (:pre-install pm) verbose?) []))
 
     (println "Installing" (u/bold (name manager)) "packages:")
     (let [{:keys [install installed?]} pm
@@ -151,7 +151,7 @@
   (with-package-manager [pm manager]
     (println "Adding package archives for:" (u/bold (name manager)))
     (let [{:keys [add-ppas]} pm
-          out (u/add-ppas ppas (make-fn add-ppas verbose?))]
+          out (u/add-all-archives ppas (make-fn add-ppas verbose?))]
       (println "")
       (zipmap (map #(str add-ppas " " %) ppas) out))))
 

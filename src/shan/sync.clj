@@ -2,6 +2,7 @@
   (:require
    [clojure.data :as data]
    [shan.util :as u]
+   [shan.config :as c]
    [shan.managers :as pm]))
 
 (defn cli-sync [{:keys [verbose]}]
@@ -14,5 +15,7 @@
     (when-not (= [add del] [nil nil])
       (u/add-generation new-config))
 
-    [(reduce-kv #(assoc %1 %2 (when %3 (pm/install-pkgs %2 %3 verbose))) {} add)
-     (reduce-kv #(assoc %1 %2 (when %3 (pm/remove-pkgs %2 %3 verbose))) {} del)]))
+    (if c/testing?
+      [(reduce-kv #(assoc %1 %2 (when %3 (pm/install-pkgs %2 %3 verbose))) {} add)
+       (reduce-kv #(assoc %1 %2 (when %3 (pm/remove-pkgs %2 %3 verbose))) {} del)]
+      u/exit-code)))

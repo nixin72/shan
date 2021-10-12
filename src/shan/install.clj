@@ -1,7 +1,8 @@
 (ns shan.install
   (:require
    [shan.util :as u]
-   [shan.managers :as pm]))
+   [shan.managers :as pm]
+   [shan.config :as c]))
 
 (defn generate-success-report [result]
   (reduce-kv (fn [a k v]
@@ -45,4 +46,4 @@
        (assoc new-conf :default-manager (:default-manager install-map))
        success)
       :else (u/add-to-conf new-conf success))
-    commands))
+    (if c/testing? commands u/exit-code)))

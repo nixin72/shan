@@ -22,4 +22,5 @@
     (when (u/yes-or-no true
                        "Would you like to edit your config"
                        "(Use this opportunity to remove what you don't need)")
-      (edit/cli-edit nil))))
+      (edit/cli-edit nil))
+    (if c/testing? config u/exit-code)))

@@ -12,6 +12,7 @@
    (spit file-path contents)
    (println "Creating file: " file-path)))
 
+(def ^:dynamic testing? false)
 (def ^:dynamic home (str (System/getenv "HOME") "/"))
 (def local ".local/share/")
 (def config ".config/")

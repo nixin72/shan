@@ -62,7 +62,8 @@
               (build-version (:version conf))
               (build-commands (:subcommands conf))
               (build-opts (:opts conf))))
-  (flush))
+  (flush)
+  u/exit-code)
 
 (defn subcommand-help [setup [cmd subcommand]]
   (let [info (first (filter #(or (= (:command %) subcommand)
@@ -76,4 +77,5 @@
                 (if (:subcommands info) (build-commands (:subcommands info)) "")
                 (build-opts (:opts info))
                 (if (:examples info) (build-examples (:examples info)) "")))
-    (flush)))
+    (flush)
+    u/exit-code))

@@ -6,16 +6,18 @@
    [shan.util-test]
    [shan.install-test]
    [shan.remove-test]
-   [shan.managers-test]))
+   [shan.managers-test]
+   [shan.config :as c]))
 
 (defn -main [& _]
   (sh "npm" "install" "--global" "underscore")
 
-  (let [{:keys [fail error]}
-        (run-all-tests #"shan\.(util|install|remove|managers)-test")]
-    (if (= 0 fail error)
-      (println (u/green "Success:") "all test cases passed.")
-      (do (println (u/green "Failure:") "you have" (+ fail error) "failing test cases.")
-          (System/exit 1))))
+  (binding [c/testing? true]
+    (let [{:keys [fail error]}
+          (run-all-tests #"shan\.(util|install|remove|managers)-test")]
+      (if (= 0 fail error)
+        (println (u/green "Success:") "all test cases passed.")
+        (do (println (u/green "Failure:") "you have" (+ fail error) "failing test cases.")
+            (System/exit 1)))))
 
   (System/exit 0))
