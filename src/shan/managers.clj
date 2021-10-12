@@ -7,7 +7,7 @@
    [shan.managers.list :as list]
    [shan.util :as u]))
 
-(def package-managers
+(def ^:dynamic package-managers
   ;; TODO: Support MacOS and Windows better
   {:brew {:type :system
           :list list/brew
@@ -116,7 +116,9 @@
     (vector? command) #(let [out (apply shell/sh (conj command (str %)))]
                          (when verbose?
                            (println "\n" out))
-                         (= 0 (:exit out)))))
+                         (if c/testing?
+                           (:out out)
+                           (= 0 (:exit out))))))
 
 (defn unknown-package-manager [manager]
   (u/error (str (u/bold (name manager)) " is not a package manager known by shan.\n"

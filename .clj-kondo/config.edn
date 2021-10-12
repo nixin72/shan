@@ -1,1 +1,2 @@
-{:lint-as {shan.managers/with-package-manager clojure.core/let}}
+{:lint-as {shan.managers/with-package-manager clojure.core/let
+           shan.macros/with-test-env clojure.core/let}}

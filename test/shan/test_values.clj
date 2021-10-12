@@ -1,5 +1,8 @@
 (ns shan.test-values
-  (:require  [clojure.java.shell :as sh]))
+  (:require  [clojure.java.shell :as sh]
+             [shan.util :as u]))
+
+(def ^:dynamic verbose? false)
 
 (def default-package-manager
   (case (System/getProperty "os.name")
@@ -11,6 +14,12 @@
               nil)
     "Mac OS X" :brew
     :choco))
+
+(def pre-installed-packages
+  '{:yay #{neovim emacs firefox make man-db rlwrap unzip}
+    :npm #{}
+    :pip #{wakatime thefuck}
+    :gem #{csv etc json openssl readline uri yaml}})
 
 (def sample-config {:default-manager default-package-manager
                     :default '[neofetch]
@@ -25,6 +34,8 @@
 (def several-pm-input ["fzf" "neofetch" ":npm" "react" ":pip" "thefuck" ":gem" "yaml"])
 (def same-pm-twice-input ["fzf" "neofetch" ":npm" "react" dpm "atop" ":npm" "expo"])
 
+(def install-map-simple-input (u/flat-map->map simple-input nil))
+
 (def complex-config
   '{:default-manager :yay
     :yay [micro nano]
@@ -35,6 +46,10 @@
   '{:yay [micro nano atop htop]
     :npm [expo react atop]
     :pip [thefuck]})
+
+(def temporary-packages
+  '{:yay [tldr]
+    :npm [is-even]})
 
 (def serialized-config
   (assoc complex-config :npm ["@react-navigation/stack"]))

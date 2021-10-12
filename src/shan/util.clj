@@ -202,6 +202,12 @@
      (add-generation (dissoc gen :default-manager))
      (write-edn c/conf-file gen))))
 
+;; These are for testing, since I can easily mock them.
+(defn already-installed? [installed-fn package] (installed-fn package))
+(defn add-archive [add-fn archive] (add-fn archive))
+(defn install-package [install-fn package] (install-fn package))
+(defn remove-package [remove-fn package] (remove-fn package))
+
 (defn install-all [pkgs install-fn installed?]
   (->>
    ;; Put it into a set first to avoid doing the same thing multiple times
@@ -210,12 +216,12 @@
    (filter #(not (nil? %)))
    ;; Install all other packages
    (mapv (fn [p]
-           (if (installed? p)
+           (if (already-installed? installed? p)
              (or (println (bold p) (blue "is already installed")) p)
              (do
                (print (str "Installing " (bold p) "... "))
                (flush)
-               (let [out (install-fn p)]
+               (let [out (install-package install-fn p)]
                  (if out
                    (do (-> "Successfully installed!" green println) p)
                    (-> "Failed to install" red println)))))))))
@@ -227,7 +233,7 @@
            (-> (str "Adding " a "... ") bold print)
            (flush)
            (when-not (nil? a)
-             (let [out (add-fn (str a))]
+             (let [out (add-archive add-fn (str a))]
                (println out)
                (if out
                  (or (-> "Successfully added!" green println) a)
@@ -242,10 +248,10 @@
            (-> (str "Uninstalling " p "... ") bold print)
            (flush)
            (cond
-             (not (installed? p)) (println "it is already uninstalled.")
+             (not (already-installed? installed? p)) (println "it is already uninstalled.")
              (nil? p) false
              :else
-             (let [out (remove-fn (str p))]
+             (let [out (remove-package remove-fn (str p))]
                (println out)
                (if out
                  (or (-> "Successfully uninstalled!" green println) p)

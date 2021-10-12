@@ -3,7 +3,10 @@
    [clojure.java.shell]
    [clojure.java.io :as io]
    [shan.config :as c]
-   [shan.test-values :as tv]))
+   [shan.util]
+   [shan.managers.npm]
+   [shan.test-values :as tv]
+   [clojure.string :as str]))
 
 (defn make-test-files []
   (-> c/conf-dir java.io.File. .mkdirs)
@@ -17,12 +20,60 @@
   (spit c/gen-file (str [tv/complex-config])))
 
 (defmacro suppress-stdout [& body]
-  `(binding [*out* *out*]
-     (set! *out* (io/writer "/dev/null" :append true))
-     (do ~@body)))
+  `(if tv/verbose?
+     (do ~@body)
+     (binding [*out* *out*]
+       (set! *out* (io/writer "/dev/null" :append true))
+       ~@body)))
+
+(defmacro with-test-env
+  "Given an environment representing the pre-existing packages on the system,
+  overload any values that would mutate the system and replace them with
+  functions that operate on the passed-in environment instead."
+  [[env-name env] & body]
+  `(binding [shan.config/testing? true]
+     (let [~env-name (atom ~env)]
+       ;; Redefine any function that would mutate environment or state
+       ;; and instead act against the env passed in.
+       (with-redefs
+        [clojure.java.shell/sh (fn [& xs#] {:exit 0 :out xs#})
+         clojure.pprint/pprint (fn [& xs#] xs#)
+         shan.managers.npm/installed? (fn [p#] (contains? (get @~env-name :npm) p#))
+         shan.util/get-new (fn [] tv/complex-config)
+         shan.util/get-temp (fn [] tv/temporary-packages)
+         shan.util/get-old (fn [] [tv/complex-config])
+         shan.util/already-installed?
+         (fn [installed-fn# package#]
+           (let [pm# (-> (installed-fn# package#) first keyword)]
+             (contains? (get @~env-name pm#) package#)))
+         shan.util/add-archive
+         (fn [add-fn# archive#]
+           (let [pm# (-> (add-fn# archive#) first keyword)]
+             (swap! ~env-name update-in [:archives pm#] conj archive#)))
+         shan.util/install-package
+         (fn [install-fn# package#]
+           (let [pm# (-> (install-fn# package#) first keyword)]
+             (swap! ~env-name update pm# conj package#)))
+         shan.util/remove-package
+         (fn [remove-fn# package#]
+           (let [pm# (-> (remove-fn# package#) first keyword)]
+             (swap! ~env-name update pm# disj package#)))]
+         (suppress-stdout ~@body)))))
+
+(defmacro with-failed-operation [& body]
+  `(with-redefs [shan.util/install-package (constantly false)]
+     ~@body))
+
+(defmacro with-input-queue [queue & body]
+  `(let [input# (atom ~queue)]
+     (with-redefs [clojure.core/read-line
+                   #(let [out# (peek @input#)]
+                      (swap! input# pop)
+                      out#)]
+       ~@body)))
 
 (defmacro suppress-side-effects [& body]
-  `(with-redefs [clojure.java.shell/sh (fn [& xs#] xs#)
+  `(with-redefs [clojure.java.shell/sh (fn [& xs#] {:exit 0 :out xs#})
                  clojure.pprint/pprint (fn [& xs#] xs#)]
      (binding [*out* *out*]
        (set! *out* (io/writer "/dev/null" :append true))

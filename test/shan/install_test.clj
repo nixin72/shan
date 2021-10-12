@@ -1,9 +1,13 @@
 (ns shan.install-test
   (:require
    [clojure.test :refer [deftest testing is]]
-   [shan.macros :refer [suppress-stdout suppress-side-effects with-test-data]]
+   [shan.macros :refer [suppress-stdout
+                        with-test-env
+                        with-failed-operation
+                        with-input-queue]]
    [shan.util :as u]
-   [shan.install :as in]))
+   [shan.install :as in]
+   [shan.test-values :as tv]))
 
 ;;;;;;;;;;; test-generate-success-report ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -51,6 +55,21 @@
                          "npm install --global expo"
                          "npm install --global react"}})))))
 
+;;;;;;;;;;; test-find-default-manager ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest test-find-default-manager
+  (println "Testing function" (u/bold "install/find-default-manager"))
+
+  (suppress-stdout
+   (testing "Getting finding default package manager without setting it."
+     (is (= (with-input-queue '("0" "n")
+              (in/find-default-manager tv/install-map-simple-input))
+            '{:paru [fzf]})))
+
+   (testing "Getting finding default package manager without setting it."
+     (is (= (with-input-queue '("1" "y")
+              (in/find-default-manager tv/install-map-simple-input))
+            '{:yay [fzf] :default-manager :yay})))))
+
 ;; NOTE: The following tests are working with stateful code, however they do not
 ;; test the side effects of the changes of state. This code deals with removing
 ;; packages from the system, however it doesn't ensure the package was
@@ -63,36 +82,32 @@
 (deftest test-cli-install
   (println "Testing function" (u/bold "install/cli-install"))
 
-  (suppress-side-effects
-   (testing "Test installing a single known package"
-     (is (= (with-test-data
-              (in/cli-install {:_arguments ["micro"]}))
-            #{"yay -S --noconfirm micro"})))
+  (with-test-env [env tv/pre-installed-packages]
+    (testing "Test installing a single known package"
+      (is (= (in/cli-install {:_arguments ["micro"]})
+             #{"yay -S --noconfirm micro"})))
 
-   (testing "Test installing several known packages from same manager"
-     (is (= (with-test-data
-              (in/cli-install {:_arguments ["micro" "nano"]}))
-            #{"yay -S --noconfirm micro"
-              "yay -S --noconfirm nano"})))
+    (testing "Test installing several packages from same manager"
+      (is (= (in/cli-install {:_arguments ["micro" "nano"]})
+             #{"yay -S --noconfirm micro"
+               "yay -S --noconfirm nano"})))
 
-   (testing "Test installing several known packages from different managers"
-     (is (= (with-test-data
-              (in/cli-install {:_arguments ["micro" "expo"]}))
-            #{"yay -S --noconfirm micro"
-              "yay -S --noconfirm expo"})))
+    (testing "Test installing with specified manager"
+      (is (= (in/cli-install {:_arguments [":npm" "underscore" "react"]})
+             #{"npm install --global underscore"
+               "npm install --global react"})))
 
-   (testing "Test installing with specified manager"
-     (is (= (with-test-data
-              (in/cli-install {:_arguments [":npm" "underscore"]}))
-            #{"npm install --global underscore"})))
+    (testing "Test installing with several specified managers"
+      (is (= (in/cli-install {:_arguments [":npm" "underscore" ":yay" "micro"]})
+             #{"npm install --global underscore"
+               "yay -S --noconfirm micro"})))
 
-   (testing "Test installing with several specified managers"
-     (is (= (with-test-data
-              (in/cli-install {:_arguments [":npm" "underscore" ":yay" "micro"]}))
-            #{"npm install --global underscore"
-              "yay -S --noconfirm micro"})))
+    (testing "Test installing with non-existant package"
+      (is (= (with-failed-operation
+               (in/cli-install {:_arguments ["some-garbage-input"]}))
+             #{"yay -S --noconfirm some-garbage-input"})))
 
-   (testing "Test installing with non-existant package"
-     (is (= (with-test-data
-              (in/cli-install {:_arguments ["some-garbage-input"]}))
-            #{"yay -S --noconfirm some-garbage-input"})))))
+    (testing "All operations completeled successfully"
+      (is (= @env (-> tv/pre-installed-packages
+                      (update :yay conj 'micro 'nano)
+                      (update :npm conj 'underscore 'react)))))))

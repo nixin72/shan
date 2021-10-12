@@ -1,20 +1,19 @@
 (ns shan.core-test
   (:require
-   [clojure.java.shell :refer [sh]]
    [clojure.test :refer [run-all-tests]]
    [shan.util :as u]
    [shan.util-test]
    [shan.install-test]
    [shan.remove-test]
    [shan.managers-test]
-   [shan.config :as c]))
+   [shan.config :as c]
+   [shan.test-values :as tv]))
 
-(defn -main [& _]
-  (sh "npm" "install" "--global" "underscore")
-
-  (binding [c/testing? true]
+(defn -main [& [verbose?]]
+  (binding [tv/verbose? (some #{"-v" "--verbose"} [verbose?])
+            c/testing? true]
     (let [{:keys [fail error]}
-          (run-all-tests #"shan\.(util|install|remove|managers)-test")]
+          (run-all-tests #"shan\.(install)-test")] ;util|install|remove|managers
       (if (= 0 fail error)
         (println (u/green "Success:") "all test cases passed.")
         (do (println (u/green "Failure:") "you have" (+ fail error) "failing test cases.")

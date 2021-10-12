@@ -13,7 +13,7 @@
         :task (apply clojure "-M -m shan.core" *command-line-args*)}
 
   test {:doc "Run tests"
-        :task (clojure "-M -m shan.core-test")}
+        :task (apply clojure "-M -m shan.core-test" *command-line-args*)}
 
   uber {:doc "Builds uberjar"
         :task (when (seq (fs/modified-since
