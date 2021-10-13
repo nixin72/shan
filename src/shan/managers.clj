@@ -169,8 +169,8 @@
 (defn installed-with [pkg]
   (reduce-kv
    (fn [a k v]
-     (let [installed? (make-fn (:installed? v) false)]
-       (if (installed? pkg)
-         (conj a k) a)))
+     (if (-> (:installed? v) (make-fn false) (u/already-installed? pkg))
+       (conj a k)
+       a))
    []
    (installed-managers)))

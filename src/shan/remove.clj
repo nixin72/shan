@@ -8,8 +8,10 @@
 (defn remove-with-pm-from-list [pms pkg]
   (let [pm (u/prompt (str "Which package manager(s) would you like to remove "
                           (u/blue pkg)  " using?\n")
-                     pms)]
-    (if pm {pm [pkg]} (reduce #(assoc %1 %2 [pkg]) {} pms))))
+                     (conj pms :all))]
+    (if (= pm :all)
+      (reduce #(assoc %1 %2 [pkg]) {} pms)
+      {pm [pkg]})))
 
 (defn remove-with-pm-from-installed [pkg]
   (let [pms (pm/installed-with pkg)]
@@ -18,7 +20,6 @@
       (do (u/warning (str "Package '" (u/bold pkg)
                           "' isn't installed in any package manager known by Shan."))
           {})
-
       (= (count pms) 1) {(first pms) [pkg]}
       :else (remove-with-pm-from-list pms pkg))))
 

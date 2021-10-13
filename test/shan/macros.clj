@@ -3,10 +3,12 @@
    [clojure.java.shell]
    [clojure.java.io :as io]
    [shan.config :as c]
+   [clojure.pprint]
    [shan.util]
    [shan.managers.npm]
    [shan.test-values :as tv]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [shan.managers :as pm]))
 
 (defn make-test-files []
   (-> c/conf-dir java.io.File. .mkdirs)
@@ -38,7 +40,7 @@
        (with-redefs
         [clojure.java.shell/sh (fn [& xs#] {:exit 0 :out xs#})
          clojure.pprint/pprint (fn [& xs#] xs#)
-         shan.managers.npm/installed? (fn [p#] (contains? (get @~env-name :npm) p#))
+         shan.managers.npm/installed? (fn [p#] (pm/make-fn "npm list --global"))
          shan.util/get-new (fn [] tv/complex-config)
          shan.util/get-temp (fn [] tv/temporary-packages)
          shan.util/get-old (fn [] [tv/complex-config])

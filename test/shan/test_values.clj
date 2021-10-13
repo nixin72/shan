@@ -16,8 +16,8 @@
     :choco))
 
 (def pre-installed-packages
-  '{:yay #{neovim emacs firefox make man-db rlwrap unzip}
-    :npm #{}
+  '{:yay #{atop emacs firefox make man-db neovim readline unzip}
+    :npm #{atop is-odd}
     :pip #{wakatime thefuck}
     :gem #{csv etc json openssl readline uri yaml}})
 
@@ -43,9 +43,10 @@
     :pip [thefuck]})
 
 (def duplicating-config
-  '{:yay [micro nano atop htop]
+  '{:yay [micro nano atop htop readline]
     :npm [expo react atop]
-    :pip [thefuck]})
+    :pip [thefuck]
+    :gem [readline]})
 
 (def temporary-packages
   '{:yay [tldr]
