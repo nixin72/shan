@@ -13,7 +13,7 @@
   (binding [tv/verbose? (some #{"-v" "--verbose"} [verbose?])
             c/testing? true]
     (let [{:keys [fail error]}
-          (run-all-tests #"shan\.(remove)-test")] ;util|install|remove|managers
+          (run-all-tests #"shan\.(util)-test")] ;util|install|remove|managers
       (if (= 0 fail error)
         (println (u/green "Success:") "all test cases passed.")
         (do (println (u/green "Failure:") "you have" (+ fail error) "failing test cases.")

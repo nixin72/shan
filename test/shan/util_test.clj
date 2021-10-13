@@ -13,11 +13,32 @@
   (testing "Test serializing an empty map"
     (is (= (u/serialize {}) {})))
 
+  (testing "Test serializing an empty vector"
+    (is (= (u/serialize []) [])))
+
+  (testing "Test serializing an empty set"
+    (is (= (u/serialize #{}) [])))
+
   (testing "Test serializing a map requiring no serialization"
     (is (= (u/serialize v/complex-config) v/complex-config)))
 
   (testing "Test serializing a map requiring serialization"
-    (is (= (u/serialize v/deserialized-config) v/serialized-config))))
+    (is (= (u/serialize v/deserialized-config) v/serialized-config)))
+
+  (testing "Test serializing a versioned config"
+    (is (= (u/serialize '{:npm {underscore "1"}})
+           '{:npm {underscore "1"}})))
+
+  (testing "Test serializing a versioned config that needs serialization"
+    (is (= (u/serialize {:npm {(symbol "@react-navigation/stack") "1"}})
+           '{:npm {"@react-navigation/stack" "1"}})))
+
+  (testing "Test serializing a config with some versioned PMs and some not."
+    (is (= (u/serialize '{:yay [nano] :npm {react "2"}})
+           '{:yay [nano] :npm {react "2"}})))
+
+  ;; TODO
+  (testing "Test serializing a config that has PPAs"))
 
 ;;;;;;;;;;; deserialize ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-deserialize
@@ -26,21 +47,48 @@
   (testing "Test deserializing an empty map"
     (is (= (u/deserialize {}) {})))
 
+  (testing "Test deserializing an empty vector"
+    (is (= (u/deserialize []) #{})))
+
   (testing "Test deserializing a map requiring no changes"
-    (is (= (u/deserialize v/complex-config) v/complex-config)))
+    (is (= (u/deserialize v/complex-config)
+           v/deserialized-complex-config)))
 
   (testing "Test deserializing a map requiring changes"
-    (is (= (u/deserialize v/serialized-config) v/deserialized-config))))
+    (is (= (u/deserialize v/serialized-config) v/deserialized-config)))
+
+  (testing "Test deserializing a versioned config"
+    (is (= (u/deserialize '{:npm {underscore "1"}})
+           '{:npm {underscore "1"}})))
+
+  (testing "Test deserializing a versioned config that needs serialization"
+    (is (= (u/deserialize {:npm {"@react-navigation/stack" "1"}})
+           {:npm {(symbol "@react-navigation/stack") "1"}})))
+
+  (testing "Test serializing a config with some versioned PMs and some not."
+    (is (= (u/deserialize '{:yay [nano] :npm {react "2"}})
+           '{:yay #{nano} :npm {react "2"}})))
+
+  ;; TODO
+  (testing "Test deserializing a config that has PPAs"))
 
 ;;;;;;;;;;; do-merge ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-do-merge
-  (println "Testing function" (u/bold "util/merge-conf:1"))
+  (println "Testing function" (u/bold "util/do-merge"))
 
-  (testing "Test merging with a single empty map"
-    (is (= (u/merge-conf {}) {})))
+  (testing "Test merging two empty maps"
+    (is (= (u/do-merge {} {}) {})))
 
-  (testing "Test merging with a single complex map"
-    (is (= (u/merge-conf v/complex-config) v/complex-config))))
+  (testing "Test merging with a complex map with an empty one"
+    (is (= (u/do-merge v/complex-config {}) v/complex-config)))
+
+  (testing "Test merging two identical maps"
+    (is (= (u/do-merge v/complex-config v/complex-config) v/complex-config)))
+
+  (testing "Test merging two different configs"
+    (is (= (u/do-merge '{:yay [micro] :npm [expo] :pip [thefuck]}
+                       '{:default-manager :yay :yay [nano] :npm [react]})
+           v/complex-config))))
 
 ;;;;;;;;;;; merge-conf/1 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-merge-conf:1
@@ -199,12 +247,12 @@
   (testing "Read from test data config file"
     (is (= (with-test-data
              (u/read-edn c/conf-file))
-           v/complex-config)))
+           v/deserialized-complex-config)))
 
   (testing "Read from test data generation file"
     (is (= (with-test-data
              (u/read-edn c/gen-file))
-           [v/complex-config]))))
+           [v/deserialized-complex-config]))))
 
 ;;;;;;;;;;; write-edn ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-write-edn
@@ -242,7 +290,7 @@
 
   (testing "Get test config file"
     (is (= (with-test-data (u/get-new))
-           v/complex-config))))
+           v/deserialized-complex-config))))
 
 ;;;;;;;;;;; get-temp ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-get-temp
@@ -250,7 +298,7 @@
 
   (testing "Get test temp file"
     (is (= (with-test-data (u/get-temp))
-           v/duplicating-config))))
+           v/deserialized-duplicating-config))))
 
 ;;;;;;;;;;; get-old ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-get-old
@@ -258,7 +306,7 @@
 
   (testing "Get test temp file"
     (is (= (with-test-data (u/get-old))
-           [v/complex-config]))))
+           [v/deserialized-complex-config]))))
 
 ;;;;;;;;;;; add-generation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-add-generation
@@ -281,16 +329,16 @@
   (println "Testing function" (u/bold "util/add-to-temp"))
 
   (testing "Add an empty map, making no changes."
-    (is (= (with-test-data (u/add-to-temp {}))
-           v/duplicating-config)))
+    (is (= (u/deserialize (with-test-data (u/add-to-temp {})))
+           (u/deserialize v/duplicating-config))))
 
   (testing "Add an identical map, making no changes"
-    (is (= (with-test-data (u/add-to-temp v/duplicating-config))
-           v/duplicating-config)))
+    (is (= (u/deserialize (with-test-data (u/add-to-temp v/duplicating-config)))
+           (u/deserialize v/duplicating-config))))
 
   (testing "Add a non-overlapping map."
-    (is (= (with-test-data (u/add-to-temp '{:gem [yaml]}))
-           (assoc v/duplicating-config :gem '[yaml])))))
+    (is (= (u/deserialize (with-test-data (u/add-to-temp '{:gem [yaml]})))
+           (u/deserialize (update v/duplicating-config :gem conj 'yaml))))))
 
 ;;;;;;;;;;; add-to-conf ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-add-to-conf
@@ -313,24 +361,28 @@
   (println "Testing function" (u/bold "util/remove-from-temp"))
 
   (testing "Remove an empty map, making no changes."
-    (is (= (with-test-data (u/remove-from-temp {}))
-           v/duplicating-config)))
+    (is (= (u/deserialize
+            (with-test-data (u/remove-from-temp {})))
+           (u/deserialize v/duplicating-config))))
 
   (testing "Remove an identical map, making it empty"
     (is (= (with-test-data (u/remove-from-temp v/duplicating-config))
            {})))
 
   (testing "Remove a non-overlapping map."
-    (is (= (with-test-data (u/remove-from-temp '{:gem [yaml]}))
-           v/duplicating-config)))
+    (is (= (u/deserialize
+            (with-test-data (u/remove-from-temp '{:gem [yaml]})))
+           (u/deserialize v/duplicating-config))))
 
   (testing "Remove a whole manager from config"
-    (is (= (with-test-data (u/remove-from-temp '{:pip [thefuck]}))
-           (dissoc v/duplicating-config :pip))))
+    (is (= (u/deserialize
+            (with-test-data (u/remove-from-temp '{:pip [thefuck]})))
+           (u/deserialize (dissoc v/duplicating-config :pip)))))
 
   (testing "Remove some packages from a manager, but not all"
-    (is (= (with-test-data (u/remove-from-temp '{:npm [expo]}))
-           (assoc v/duplicating-config :npm '[react atop])))))
+    (is (= (u/deserialize
+            (with-test-data (u/remove-from-temp '{:npm [expo]})))
+           (u/deserialize (assoc v/duplicating-config :npm '[react atop]))))))
 
 ;;;;;;;;;;; remove-from-conf ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-remove-from-conf

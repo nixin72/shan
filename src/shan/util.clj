@@ -8,32 +8,60 @@
    [clojure.string :as str]
    [shan.config :as c]))
 
-(defn deserialize [config-map]
-  (reduce-kv
-   #(assoc %1 %2 (cond
-                   (keyword? %3) %3
-                   (map? %3) (reduce-kv (fn [a k v] (assoc a (symbol k) v)) {} %3)
-                   (vector? %3) (mapv symbol %3)))
-   {}
-   config-map))
+(defn deserialize
+  "Recursively deserializes a data structure so it can be used with the rest of
+  Shan's internal usage of data - which is all symbols and keywords. Things like
+  '@react-navigation/stack' need to be turned into symbols so that equality
+  between things will be true."
+  [config-map]
+  (cond
+    (coll? config-map)
+    (reduce
+     (fn [a v]
+       (cond
+         (map-entry? v)
+         (let [[key val] v]
+           (assoc a (if (string? key) (symbol key) key) (deserialize val)))
+         (coll? v) (conj a (deserialize v))
+         (or (keyword? v) (symbol? v) (number? v)) (conj a v)
+         (string? v) (conj a (symbol v))))
+     (if (map? config-map) {} #{})
+     config-map)
+    :else config-map))
 
-(defn serialize [config-map]
-  (reduce-kv
-   #(assoc %1 %2 (cond
-                   (keyword? %3) %3
-                   (map? %3)
-                   (reduce-kv
-                    (fn [a k v] (assoc a (if (= (first (str k)) \@) (str k) k) v))
-                    {} %3)
-                   (vector? %3)
-                   (mapv (fn [v] (if (= (first (str v)) \@) (str v) v)) %3)))
-   {}
-   config-map))
+(defn serialize
+  "Recursively serializes a data structure such that it can be read back in.
+  The only instance, as far as I can tell, that something won't be able to be
+  read back in is when the symbol contains special Clojure characters. For
+  instance, npm package naming often contains @ and / symbols in their names,
+  like @react-navigation/stack. This name requires serialization so it can be
+  successfully read back in by Clojure. This means transforming all of these
+  symbols into strings before writing them out to files."
+  [config-map]
+  (if (coll? config-map)
+    (reduce
+     (fn [a v]
+       (cond
+         (map-entry? v)
+         (let [skey (str (first v))
+               key (if (or (str/index-of skey \@)
+                           (str/index-of skey \/))
+                     skey
+                     (first v))]
+           (assoc a key (serialize (second v))))
+         (coll? v) (conj a (serialize v))
+         (or (keyword? v) (string? v) (number? v)) (conj a v)
+         (symbol? v) (conj a (if (= (first (str v)) \@) (str v) v))))
+     (if (map? config-map) {} [])
+     config-map)
+    config-map))
 
 (defn do-merge [conf1 conf2]
   (reduce-kv (fn [a k v]
                (if (contains? a k)
-                 (update a k #(into [] (into (into #{} v) %)))
+                 (if (keyword? v)
+                   (assoc a k v)
+                   (update a k #(into [] (into (into #{} v) %))))
                  (assoc a k v)))
              conf1
              conf2))

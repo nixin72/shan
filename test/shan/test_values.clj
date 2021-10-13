@@ -42,17 +42,32 @@
     :npm [expo react]
     :pip [thefuck]})
 
+(def deserialized-complex-config
+  '{:default-manager :yay
+    :yay #{micro nano}
+    :npm #{expo react}
+    :pip #{thefuck}})
+
 (def duplicating-config
   '{:yay [micro nano atop htop readline]
     :npm [expo react atop]
     :pip [thefuck]
     :gem [readline]})
 
+(def deserialized-duplicating-config
+  '{:yay #{micro nano atop htop readline}
+    :npm #{expo react atop}
+    :pip #{thefuck}
+    :gem #{readline}})
+
 (def temporary-packages
   '{:yay [tldr]
     :npm [is-even]})
 
 (def serialized-config
-  (assoc complex-config :npm ["@react-navigation/stack"]))
+  (assoc complex-config
+         :npm ["@react-navigation/stack"]))
+
 (def deserialized-config
-  (assoc complex-config :npm [(symbol "@react-navigation/stack")]))
+  (assoc deserialized-complex-config
+         :npm #{(symbol "@react-navigation/stack")}))
