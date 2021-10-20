@@ -1,10 +1,24 @@
 (ns shan.managers-test
   (:require
    [clojure.test :refer [deftest testing is]]
-   [shan.macros :refer [suppress-side-effects suppress-state-changes]]
+   [shan.macros :refer [with-test-env suppress-side-effects suppress-state-changes]]
    [shan.managers :as pm]
    [shan.util :as u]
    [shan.test-values :as v]))
+
+;;;;;;;;;;; installed-managers ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest test-installed-managers
+  (println "Testing function" (u/bold "managers/installed-managers"))
+
+  (with-test-env [_ v/pre-installed-packages]
+    ;; TODO: How to test that they're actually on the system?
+    (testing "All managers should appear as installed"
+      (is (= (pm/installed-managers)
+             pm/package-managers)))))
+
+;;;;;;;;;;; determine-default-manager ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest test-determine-default-manager
+  (println "Testing function" (u/bold "managers/determine-default-manager")))
 
 ;;;;;;;;;;; make-fn ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-make-fn

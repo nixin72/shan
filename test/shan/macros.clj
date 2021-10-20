@@ -24,9 +24,7 @@
 (defmacro suppress-stdout [& body]
   `(if tv/verbose?
      (do ~@body)
-     (binding [*out* *out*]
-       (set! *out* (io/writer "/dev/null" :append true))
-       ~@body)))
+     (with-out-str ~@body)))
 
 (defmacro with-test-env
   "Given an environment representing the pre-existing packages on the system,
