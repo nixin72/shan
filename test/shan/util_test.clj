@@ -108,9 +108,43 @@
     (is (= (u/make-unordered (ordered-set :a [:b :c] :d)) #{#{:b :c} :a :d}))
     (is (= (u/make-unordered (ordered-map :a [:b :c])) {:a #{:b :c}}))))
 
+;;;;;;;;;;; unordered= ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest test-unordered=
+  (println "Testing function" (u/bold "util/unordered="))
+
+  (testing "Test with empty unordered data structures"
+    (is (true? (u/unordered= {} {})))
+    (is (true? (u/unordered= #{} #{}))))
+
+  (testing "Test with empty ordered data structures"
+    (is (true? (u/unordered= [] [])))
+    (is (true? (u/unordered= () ())))
+    (is (true? (u/unordered= (ordered-set) (ordered-set))))
+    (is (true? (u/unordered= (ordered-map) (ordered-map)))))
+
+  (testing "Test with small non-nested unordered data"
+    (is (true? (u/unordered= {:a :b :c :d} {:c :d :a :b})))
+    (is (true? (u/unordered= #{:a :b :c} #{:c :a :b}))))
+
+  (testing "Test with small non-nested ordered data"
+    (is (true? (u/unordered= [:a :b :c] [:c :a :b])))
+    (is (true? (u/unordered= (list :a :b :c) [:c :a :b])))
+    (is (true? (u/unordered= (ordered-set :a :b :c) (ordered-set :c :a :b))))
+    (is (true? (u/unordered= (ordered-map :a :b :c :d) (ordered-map :c :d :a :b)))))
+
+  (testing "Test with small nested unordered data"
+    (is (true? (u/unordered= {:a {:b :c} :d :e} {:d :e :a {:b :c}})))
+    (is (true? (u/unordered= #{:a :b #{:c :d}} #{#{:d :c} :a :b}))))
+
+  (testing "Test with small nested ordered data"
+    (is (true? (u/unordered= [:a [:b :c] :d] [[:c :b] :d :a])))
+    (is (true? (u/unordered= (list :a [:b :c] :d) [(ordered-set :c :b) :d :a])))
+    (is (true? (u/unordered= (ordered-set :a [:b :c] :d)
+                             [:a (ordered-set :b :c) :d])))
+    (is (true? (u/unordered= (ordered-map :a [:b :c] :d (ordered-set :e :f))
+                             (ordered-map :d (ordered-set :f :e) :a [:c :b]))))))
+
 ;;;;;;;;;;; do-merge ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 (deftest test-do-merge
   (println "Testing function" (u/bold "util/do-merge"))
 
