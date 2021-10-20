@@ -39,7 +39,7 @@
    :default "human"
    :option "format"
    :short "f"
-   :type #{"human" "json" "parseable"}})
+   :type #{"human" "json" "parse" "edn"}})
 
 (def context
   (str " Given the following shan.edn config file:\n"
