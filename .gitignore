@@ -12,7 +12,7 @@ pom.xml.asc
 .hgignore
 .hg/
 .lsp/
-.clj-kondo/.cache
+/.clj-kondo/.cache
 .cpcache
 .test
 /shan
