@@ -7,6 +7,9 @@
 (defn build-name [cmd subcmd desc]
   (str "\n" (u/bold "NAME:") "\n " cmd (if subcmd (str " " subcmd) "") " - " desc "\n"))
 
+(defn build-description [desc]
+  (apply str "\n" (map #(format " - %s\n" %) desc)))
+
 (defn build-usage [cmd long short options? arguments?]
   (str "\n" (u/bold "USAGE:") "\n " cmd " "
        (cond (and long short) (str "[" long "|" short "]")
@@ -27,20 +30,28 @@
 (defn build-version [version]
   (str "\n" (u/bold "VERSION:") "\n " version "\n"))
 
-(defn build-command [long short desc]
-  (format "   %-2s, %-10s %s\n" short long desc))
+(defn build-command [cmd]
+  (format "\n    %-2s, %-10s %s" (:short cmd) (:command cmd) (:description cmd)))
 
 (defn build-commands [commands]
-  (apply str "\n" (u/bold "COMMANDS:") "\n"
-         (map #(build-command (:command %) (:short %) (:description %)) commands)))
+  (->> commands
+       (group-by :category)
+       (reduce-kv
+        (fn [a k v]
+          (conj a (str "  " (u/bold (if (nil? k) "Other" k)) ":"
+                       (apply str (map (fn [x] (build-command x)) v))
+                       "\n")))
+        [])
+       (str/join "\n")
+       (str "\n" (u/bold "COMMANDS:") "\n")))
 
 (defn build-opt [long short desc]
   (format "   -%s, --%-8s %s\n" short long desc))
 
 (defn build-opts [opts]
-  (apply str "\n" (u/bold "OPTIONS:") "\n"
-         (map #(build-opt (:option %) (:short %) (:as %))
-              (conj opts {:option "help" :short "?" :as ""}))))
+  (->> (conj opts {:as "Print the help pages" :option "help" :short "h"})
+       (map #(build-opt (:option %) (:short %) (:as %)))
+       (apply str "\n" (u/bold "OPTIONS:") "\n")))
 
 (defn build-example [desc ex]
   (format "   $ %s\n     # %s\n" ex (u/grey desc)))
@@ -61,7 +72,10 @@
               (build-global-usage (:command conf))
               (build-version (:version conf))
               (build-commands (:subcommands conf))
-              (build-opts (:opts conf))))
+              (build-opts (conj (:opts conf)
+                                {:as "Print the current version of shan"
+                                 :option "version"
+                                 :short "v"}))))
   (flush)
   u/exit-code)
 
@@ -70,6 +84,7 @@
                                  (= (:short %) subcommand))
                             (:subcommands setup)))]
     (print (str (build-name cmd subcommand (:description info))
+                (if (:desc-long info) (build-description (:desc-long info)) "")
                 (build-usage cmd (:command info) (:short info) (:opts info) (:arguments? info))
                 (if (some #{subcommand} #{"install" "in" "remove" "rm" "sync" "sc"})
                   (build-pms (keys (pm/installed-managers)))

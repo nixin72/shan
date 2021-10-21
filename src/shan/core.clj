@@ -6,6 +6,7 @@
    [shan.list :as list]
    [shan.remove :as remove]
    [shan.rollback :as rollback]
+   [shan.config :as c]
    [shan.sync :as sync]
    [shan.help :as help]
    [shan.init :as init]
@@ -50,14 +51,21 @@
 (def opts
   {:command "shan"
    :description "A declarative wrapper around your favourite package manager"
-   :version "0.5.0"
+   :version c/version
    :global-help help/global-help
    :subcmd-help help/subcommand-help
    :subcommands
-   [{:command "install"
+   [{:command "default"
+     :short "de"
+     :category "Managing Packages"
+     :arguments? "<package-manager>"
+     :description "Change the default package manager in your config"
+     :runs edit/cli-default}
+    {:command "install"
      :short "in"
+     :category "Managing Packages"
      :arguments? *
-     :description "Install packages through any supported package manager."
+     :description "Install packages through any supported package manager"
      :examples [context
                 {:desc (str "Install packages through " (u/blue "yay") ", this config's default package manager")
                  :ex (str (u/green "shan") " install open-jdk vscode")}
@@ -67,16 +75,11 @@
                  :ex (str (u/green "shan") " install open-jdk vscode " (u/blue ":npm") " react-native expo " (u/blue ":pip") " PyYAML")}]
      :runs install/cli-install
      :opts [verbose? temporary?]}
-    {:command "add-ppa"
-     :short "ap"
-     :arguments *
-     :description "Adds package archives for your package managers to use."
-     :runs repo/cli-add-ppa
-     :opts [verbose? temporary?]}
     {:command "remove"
      :short "rm"
+     :category "Managing Packages"
      :arguments? *
-     :description "Uninstall packages through any supported package manager."
+     :description "Uninstall packages through any supported package manager"
      :examples [context
                 {:desc "Removes the packages through yay"
                  :ex (str (u/green "shan") " remove python nodejs")}
@@ -88,22 +91,34 @@
                  :ex (str (u/green "shan") " remove emacs")}]
      :runs remove/cli-remove
      :opts [verbose? temporary?]}
+    {:command "add-ppa"
+     :short "ap"
+     :category "Managing Packages"
+     :arguments *
+     :description "Adds package archives for your package managers to use"
+     :runs repo/cli-add-ppa
+     :opts [verbose? temporary?]}
     {:command "del-ppa"
      :short "dp"
+     :category "Managing Packages"
      :arguments *
-     :description "Removes package archives from your package managers."
+     :description "Removes package archives from your package managers"
      :runs repo/cli-del-ppa
      :opts [verbose? temporary?]}
     {:command "sync"
      :short "sc"
      :arguments? 0
-     :description "Syncs your config to your installed packages."
+     :description "Syncs your config to get your system up to date"
+     :desc-long ["Installs and removes any packages that have been changed in your config"
+                 "Adds and removes symlinks to files"
+                 "Installs packages from non-package manager sources"
+                 "Runs any scripts specified"]
      :runs sync/cli-sync
      :opts [verbose?]}
     {:command "rollback"
      :short "rb"
      :arguments 0
-     :description "Roll back your last change."
+     :description "Roll back your last change"
      :runs rollback/cli-rollback}
     {:command "edit"
      :short "ed"
@@ -111,40 +126,49 @@
      :description "Shells out to a text editor for you to edit your config"
      :opts [editor]
      :runs edit/cli-edit}
-    {:command "default"
-     :short "de"
-     :arguments? "<package-manager>"
-     :description "Change the default package manager in your config."
-     :runs edit/cli-default}
     {:command "purge"
      :short "pg"
+     :category "Managing Packages"
      :arguments? 0
-     :description "Purges all temporary packages from your system."
+     :description "Purges all temporary packages from your system"
      :opts [verbose?]
      :runs edit/cli-purge}
     {:command "merge"
      :short "mg"
+     :category "Managing Packages"
      :arguments? 0
-     :description "Merges all temporary packages into your config file."
+     :description "Merges all temporary packages into your config file"
      :runs edit/cli-merge}
     {:command "list"
      :short "ls"
+     :category "Managing Packages"
      :arguments? 0
-     :description "Lists all of the packages installed through Shan."
+     :description "Lists all of the packages installed through Shan"
      :runs list/cli-list
      :opts [temporary? output-format]}
     {:command "gen"
      :short "ge"
      :arguments? 0
-     :description "Generates a config for first time use from installed packages."
+     :description "Generates a config for first time use from installed packages"
      :opts [editor]
-     :runs init/cli-init}]})
+     :runs init/cli-init}
+    {:command "version"
+     :short "v"
+     :arguments 0
+     :description "Print the current version of shan"
+     :runs (fn [_] (println c/version))}]})
 
 (defn -main [& args]
   (try
     (case (first args)
       ;; If it looks like the user is trying to get help, help them
-      ("h" "help" "-h" "doc" "docs" "info" "?") (run-cmd ["--help"] opts)
+      ("h" "help" "-h" "--help") (run-cmd ["--help"] opts)
+      ;; Not providing -v and --version breaks a user's general expectations
+      ;; since they're pretty standard. Yes, they're also provided with
+      ;; v and version subcommands, but *not* having this would break expectations.
+      ("-v" "--version") (run-cmd ["version"] opts)
+      nil
+      (run-cmd ["--help"] opts)
       ;; Otherwise, just do what they want
       (run-cmd args opts))
     (catch clojure.lang.ExceptionInfo _
