@@ -14,6 +14,10 @@
   (prn arg)
   arg)
 
+(defn identity-pprint [arg]
+  (pprint arg)
+  arg)
+
 (defn deserialize
   "Recursively deserializes a data structure so it can be used with the rest of
   Shan's internal usage of data - which is all symbols and keywords. Things like
@@ -216,7 +220,7 @@
     (read-edn c/temp-file)
     (catch java.lang.RuntimeException _ {})
     (catch java.io.FileNotFoundException _
-      (-> c/gen-dir java.io.File. .mkdir)
+      (-> c/data-dir java.io.File. .mkdir)
       (-> c/temp-file java.io.File. .createNewFile)
       (spit c/temp-file "{}")
       {})))
@@ -226,7 +230,7 @@
     (read-edn c/gen-file)
     (catch java.lang.RuntimeException _ [{}])
     (catch java.io.FileNotFoundException _
-      (-> c/gen-dir java.io.File. .mkdir)
+      (-> c/data-dir java.io.File. .mkdir)
       (-> c/gen-file java.io.File. .createNewFile)
       (spit c/gen-file "[]")
       [])))
