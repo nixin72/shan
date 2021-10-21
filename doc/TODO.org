@@ -1,0 +1,53 @@
+* Ideas for Shan
+
+- [-] manage system packages
+  - [-] install/remove packages
+    - [ ] Thing should be /ordered/ to ensure dependencies are met.
+      - ~shan install npm -npm underscore~ shouldn't fail because npm tries to go first.
+    - [ ] Should be able to list packages in flag-style format like above
+    - [-] Support for lots of package managers. It would be cool to be able to support:
+      - [X] yay
+      - [X] paru
+      - [X] pacman
+      - [ ] apt
+      - [ ] brew
+      - [ ] mac ports
+      - [ ] rpm
+      - [ ] yum
+      - [ ] dnf
+      - [ ] snap
+      - [ ] app image
+      - [ ] flatpak
+      - [ ] scoop
+      - [ ] choco
+      - [ ] winget
+      - [X] npm
+      - [ ] yarn
+      - [X] pip
+      - [ ] conda
+      - [X] gem
+      - [ ] gu
+      - [ ] raco
+      - [ ] dotnet
+  - [ ] add/remove package archives
+    - [ ] Learn how package archives /work/ a little bit before jumping into this. I'm trying to
+      implement something I don't really know about.
+  - [X] list all packages
+    - [X] support listing packages in various formats
+      - [X] parseable
+      - [X] json
+      - [X] edn
+      - [X] human
+  - [ ] search for packages
+    - [ ] Display package info from package manager it belongs to
+      - [ ] This is really slow right now because finding out which package manager a package
+        belongs to is slow. Some caching could do good here.
+  - [ ] merging/purging temporary packages
+  - [X] importing packages to start using shan
+  - [ ] support adding different mirrors for certain package managers. Ex. Manjaro uses a different
+    AUR mirror than Arch Linux.
+- [ ] manager dotfiles
+  - [ ] symlink dotfiles from one place to another
+- [ ] install software not in package managers
+  - [ ] run system commands
+  - [ ] run scripts
