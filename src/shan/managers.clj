@@ -33,17 +33,19 @@
             :remove "winget uninstall"
             :installed? "winget list --exact"}
    ;; NOTE: Proper support
-   :paru {:type :system
-          :list list/pacman
-          :install "paru -S --noconfirm"
-          :remove "paru -R --noconfirm"
-          :installed? "paru -Q"}
    :pacman {:type :system
             :list list/pacman
             :install "sudo pacman -S --noconfirm"
             :remove "sudo pacman -R --noconfirm"
-            :installed? "sudo pacman -Q"}
+            :installed? "pacman -Q"}
+   :paru {:type :system
+          :uses :pacman
+          :list list/pacman
+          :install "paru -S --noconfirm"
+          :remove "paru -R --noconfirm"
+          :installed? "paru -Q"}
    :yay {:type :system
+         :uses :pacman
          :list list/pacman
          :install "yay -S --noconfirm"
          :remove "yay -R --noconfirm"
@@ -53,6 +55,12 @@
          :install "npm install --global"
          :remove "npm uninstall --global"
          :installed? npm/installed?}
+   :yarn {:type :language
+          :uses :npm
+          :list list/npm
+          :install "npm install --global"
+          :remove "npm uninstall --global"
+          :installed? npm/installed?}
    :pip {:type :language
          :list list/pip
          :install "python -m pip install"
@@ -166,11 +174,14 @@
       (println "")
       (zipmap (map #(str remove " " %) pkgs) out))))
 
+;; TODO: Cache shit to make this go faster, cause it's real slow atm
 (defn installed-with [pkg]
   (reduce-kv
    (fn [a k v]
+     (prn k)
      (if (-> (:installed? v) (make-fn false) (u/already-installed? pkg))
-       (conj a k)
+       (if (contains? v :uses) a
+           (conj a k))
        a))
    []
    (installed-managers)))

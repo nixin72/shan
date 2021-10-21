@@ -3,7 +3,8 @@
    [clojure.pprint :as pprint]
    [clojure.string :as str]
    [clojure.data.json :as json]
-   [shan.util :as u]))
+   [shan.util :as u]
+   [shan.managers :as pm]))
 
 (defn print-human [config]
   (->> (dissoc config :default-manager)
@@ -36,14 +37,14 @@
                 "parse" (print-parseable config)
                 "edn" (pprint/pprint config)
                 "json" (json/pprint config))))]
-    (cond
-      (not= _arguments []) (println "Too many arguments supplied to list")
+    (if (empty? _arguments)
+      (if (= temp false)
+        (print-config (u/get-new))
+        (print-config (u/get-temp)))
+      ;; TODO: Make this speeby
+      (->> _arguments
+           (mapv #(reduce (fn [a v] (assoc a v [%])) {} (pm/installed-with %)))
+           (apply u/merge-conf)
+           prn))
 
-      (= temp false)
-      (let [conf (u/get-new)]
-        (print-config conf))
-
-      :else
-      (let [conf (u/get-temp)]
-        (print-config conf)))
     @u/exit-code))
