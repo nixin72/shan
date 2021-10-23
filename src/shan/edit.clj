@@ -40,5 +40,5 @@
       (u/write-edn c/conf-file (assoc conf :default-manager (keyword default)))
 
       :else
-      (u/error "Package manager " (u/bold default) " is not known by shan."))
+      (u/error "Package manager" (u/bold default) "is not known by shan."))
     (if c/testing? default @u/exit-code)))

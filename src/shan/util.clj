@@ -6,7 +6,17 @@
    [clojure.data :as data]
    [clojure.set :as set]
    [clojure.string :as str]
+   [flatland.ordered.map :refer [ordered-map]]
+   [flatland.ordered.set :refer [ordered-set]]
    [shan.config :as c]))
+
+(defn identity-prn [arg]
+  (prn arg)
+  arg)
+
+(defn identity-pprint [arg]
+  (pprint arg)
+  arg)
 
 (defn deserialize
   "Recursively deserializes a data structure so it can be used with the rest of
@@ -25,7 +35,7 @@
          (coll? v) (conj a (deserialize v))
          (or (keyword? v) (symbol? v) (number? v)) (conj a v)
          (string? v) (conj a (symbol v))))
-     (if (map? config-map) {} #{})
+     (if (map? config-map) (ordered-map) (ordered-set))
      config-map)
     :else config-map))
 
@@ -52,22 +62,55 @@
          (coll? v) (conj a (serialize v))
          (or (keyword? v) (string? v) (number? v)) (conj a v)
          (symbol? v) (conj a (if (= (first (str v)) \@) (str v) v))))
-     (if (map? config-map) {} [])
+     (condp instance? config-map
+       flatland.ordered.map.OrderedMap {}
+       flatland.ordered.set.OrderedSet []
+       clojure.lang.PersistentArrayMap {}
+       clojure.lang.PersistentHashSet  []
+       clojure.lang.PersistentVector   []
+       clojure.lang.PersistentList     [])
      config-map)
     config-map))
+
+(defn make-unordered
+  "Convert all ordered data structures into some unordered counterpart.
+  Mostly used for testing where order is often irrelevant."
+  [ds]
+  (if (coll? ds)
+    (reduce
+     (fn [a v]
+       (if (map-entry? v)
+         (assoc a (first v) (make-unordered (second v)))
+         (conj a (make-unordered v))))
+     (condp instance? ds
+       flatland.ordered.set.OrderedSet #{}
+       flatland.ordered.map.OrderedMap {}
+       clojure.lang.PersistentArrayMap {}
+       clojure.lang.PersistentHashSet #{}
+       clojure.lang.PersistentVector  #{}
+       clojure.lang.PersistentList    #{}
+       #{})
+     ds)
+    ds))
+
+(defn unordered=
+  "Test if two data structures are equivalent in that they contain all the
+  same elements, but the elements aren't necessarily in the same order."
+  [a b]
+  (= (make-unordered a) (make-unordered b)))
 
 (defn do-merge [conf1 conf2]
   (reduce-kv (fn [a k v]
                (if (contains? a k)
                  (if (keyword? v)
                    (assoc a k v)
-                   (update a k #(into [] (into (into #{} v) %))))
+                   (update a k #(into (ordered-set) (into % v))))
                  (assoc a k v)))
              conf1
              conf2))
 
 (defn merge-conf
-  ([] {})
+  ([] (ordered-map))
   ([conf] conf)
   ([conf1 conf2]
    (let [[old new same] (data/diff conf1 conf2)]
@@ -95,8 +138,8 @@
        (reduce (fn [a [k v]]
                  (if (contains? a k)
                    (update a k into v)
-                   (assoc a k v)))
-               {})))
+                   (assoc a k (into (ordered-set) v))))
+               (ordered-map))))
 
 (defn remove-from-config [conf pkgs]
   (reduce-kv
@@ -113,6 +156,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;; NOTE: Stateful functions beyond this point ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (def exit-code (atom 0))
 (def normal "\033[0m")
@@ -176,7 +220,7 @@
     (read-edn c/temp-file)
     (catch java.lang.RuntimeException _ {})
     (catch java.io.FileNotFoundException _
-      (-> c/gen-dir java.io.File. .mkdir)
+      (-> c/data-dir java.io.File. .mkdir)
       (-> c/temp-file java.io.File. .createNewFile)
       (spit c/temp-file "{}")
       {})))
@@ -186,7 +230,7 @@
     (read-edn c/gen-file)
     (catch java.lang.RuntimeException _ [{}])
     (catch java.io.FileNotFoundException _
-      (-> c/gen-dir java.io.File. .mkdir)
+      (-> c/data-dir java.io.File. .mkdir)
       (-> c/gen-file java.io.File. .createNewFile)
       (spit c/gen-file "[]")
       [])))
@@ -239,7 +283,7 @@
 (defn install-all [pkgs install-fn installed?]
   (->>
    ;; Put it into a set first to avoid doing the same thing multiple times
-   (into #{} pkgs)
+   (into (ordered-set) pkgs)
    ;; Filter out any accidental nils
    (filter #(not (nil? %)))
    ;; Install all other packages
@@ -256,7 +300,7 @@
 
 (defn add-all-archives [archives add-fn]
   (->>
-   (into #{} archives)
+   (into (ordered-set) archives)
    (mapv (fn [a]
            (-> (str "Adding " a "... ") bold print)
            (flush)
@@ -270,7 +314,7 @@
 (defn remove-all [pkgs remove-fn installed?]
   (->>
    ;; Avoid doing the same thing twice
-   (into #{} pkgs)
+   (into (ordered-set) pkgs)
    ;; Uninstall all other packages
    (mapv (fn [p]
            (-> (str "Uninstalling " p "... ") bold print)

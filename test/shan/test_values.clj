@@ -1,6 +1,9 @@
 (ns shan.test-values
-  (:require  [clojure.java.shell :as sh]
-             [shan.util :as u]))
+  (:require
+   [clojure.java.shell :as sh]
+   [shan.util :as u]
+   [flatland.ordered.map :refer [ordered-map]]
+   [flatland.ordered.set :refer [ordered-set]]))
 
 (def ^:dynamic verbose? false)
 
@@ -21,10 +24,10 @@
     :pip #{wakatime thefuck}
     :gem #{csv etc json openssl readline uri yaml}})
 
-(def sample-config {:default-manager default-package-manager
-                    :default '[neofetch]
-                    :npm '[underscore]
-                    :pip '[thefuck]})
+(def sample-config (ordered-map {:default-manager default-package-manager
+                                 :default (ordered-set '[neofetch])
+                                 :npm (ordered-set '[underscore])
+                                 :pip (ordered-set '[thefuck])}))
 
 (def dpm (str default-package-manager))
 (def empty-input [])

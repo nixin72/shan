@@ -1,6 +1,8 @@
 (ns shan.util-test
   (:require
    [clojure.test :refer [deftest testing is]]
+   [flatland.ordered.map :refer [ordered-map]]
+   [flatland.ordered.set :refer [ordered-set]]
    [shan.macros :refer [with-test-data suppress-side-effects suppress-stdout]]
    [shan.test-values :as v]
    [shan.util :as u]
@@ -72,6 +74,76 @@
   ;; TODO
   (testing "Test deserializing a config that has PPAs"))
 
+;;;;;;;;;;; make-unordered ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest test-make-unordered
+  (println "Testing function" (u/bold "util/make-unordered"))
+
+  (testing "Test with already unordered structures"
+    (is (= (u/make-unordered {}) {}))
+    (is (= (u/make-unordered #{}) #{})))
+
+  (testing "Test with empty ordered structures"
+    (is (= (u/make-unordered []) #{}))
+    (is (= (u/make-unordered ()) #{}))
+    (is (= (u/make-unordered (ordered-set)) #{}))
+    (is (= (u/make-unordered (ordered-map)) {})))
+
+  (testing "Test with small non-nested unordered structures"
+    (is (= (u/make-unordered {:a :b :c :d}) {:c :d :a :b}))
+    (is (= (u/make-unordered #{:a :b :c}) #{:c :a :b})))
+
+  (testing "Test with small non-nested ordered structures"
+    (is (= (u/make-unordered [:a :b :c :d]) #{:c :d :a :b}))
+    (is (= (u/make-unordered '(:a :b :c)) #{:c :a :b}))
+    (is (= (u/make-unordered (ordered-set :a :b :c)) #{:c :a :b}))
+    (is (= (u/make-unordered (ordered-map :a :b :c :d)) {:c :d :a :b})))
+
+  (testing "Test with small nested unordered structures"
+    (is (= (u/make-unordered {:a [:b :c] :d {:e :f}}) {:a #{:b :c} :d {:e :f}}))
+    (is (= (u/make-unordered #{:a #{:b :c} :d}) #{:a #{:b :c} :d})))
+
+  (testing "Test with small nested ordered structures"
+    (is (= (u/make-unordered [:a [:b :c] :d]) #{:d #{:c :b} :a}))
+    (is (= (u/make-unordered '(:a {:b :c} :d)) #{{:b :c} :a :d}))
+    (is (= (u/make-unordered (ordered-set :a [:b :c] :d)) #{#{:b :c} :a :d}))
+    (is (= (u/make-unordered (ordered-map :a [:b :c])) {:a #{:b :c}}))))
+
+;;;;;;;;;;; unordered= ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(deftest test-unordered=
+  (println "Testing function" (u/bold "util/unordered="))
+
+  (testing "Test with empty unordered data structures"
+    (is (true? (u/unordered= {} {})))
+    (is (true? (u/unordered= #{} #{}))))
+
+  (testing "Test with empty ordered data structures"
+    (is (true? (u/unordered= [] [])))
+    (is (true? (u/unordered= () ())))
+    (is (true? (u/unordered= (ordered-set) (ordered-set))))
+    (is (true? (u/unordered= (ordered-map) (ordered-map)))))
+
+  (testing "Test with small non-nested unordered data"
+    (is (true? (u/unordered= {:a :b :c :d} {:c :d :a :b})))
+    (is (true? (u/unordered= #{:a :b :c} #{:c :a :b}))))
+
+  (testing "Test with small non-nested ordered data"
+    (is (true? (u/unordered= [:a :b :c] [:c :a :b])))
+    (is (true? (u/unordered= (list :a :b :c) [:c :a :b])))
+    (is (true? (u/unordered= (ordered-set :a :b :c) (ordered-set :c :a :b))))
+    (is (true? (u/unordered= (ordered-map :a :b :c :d) (ordered-map :c :d :a :b)))))
+
+  (testing "Test with small nested unordered data"
+    (is (true? (u/unordered= {:a {:b :c} :d :e} {:d :e :a {:b :c}})))
+    (is (true? (u/unordered= #{:a :b #{:c :d}} #{#{:d :c} :a :b}))))
+
+  (testing "Test with small nested ordered data"
+    (is (true? (u/unordered= [:a [:b :c] :d] [[:c :b] :d :a])))
+    (is (true? (u/unordered= (list :a [:b :c] :d) [(ordered-set :c :b) :d :a])))
+    (is (true? (u/unordered= (ordered-set :a [:b :c] :d)
+                             [:a (ordered-set :b :c) :d])))
+    (is (true? (u/unordered= (ordered-map :a [:b :c] :d (ordered-set :e :f))
+                             (ordered-map :d (ordered-set :f :e) :a [:c :b]))))))
+
 ;;;;;;;;;;; do-merge ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-do-merge
   (println "Testing function" (u/bold "util/do-merge"))
@@ -83,12 +155,15 @@
     (is (= (u/do-merge v/complex-config {}) v/complex-config)))
 
   (testing "Test merging two identical maps"
-    (is (= (u/do-merge v/complex-config v/complex-config) v/complex-config)))
+    (is (u/unordered=
+         (u/do-merge v/complex-config v/complex-config)
+         v/complex-config)))
 
   (testing "Test merging two different configs"
-    (is (= (u/do-merge '{:yay [micro] :npm [expo] :pip [thefuck]}
-                       '{:default-manager :yay :yay [nano] :npm [react]})
-           v/complex-config))))
+    (is (u/unordered=
+         (u/do-merge '{:yay [micro] :npm [expo] :pip [thefuck]}
+                     '{:default-manager :yay :yay [nano] :npm [react]})
+         v/complex-config))))
 
 ;;;;;;;;;;; merge-conf/1 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-merge-conf:1
@@ -111,22 +186,25 @@
     (is (= (u/merge-conf {} v/complex-config) v/complex-config)))
 
   (testing "Test merging with the second config empty"
-    (is (= (u/merge-conf v/complex-config {}) v/complex-config)))
+    (is (u/unordered=
+         (u/merge-conf v/complex-config {}) v/complex-config)))
 
   (testing "Test merging identical configs"
-    (is (= (u/merge-conf v/complex-config v/complex-config) v/complex-config)))
+    (is (u/unordered=
+         (u/merge-conf v/complex-config v/complex-config) v/complex-config)))
 
   (testing "Test merging two unique configs"
-    (is (= (u/merge-conf
-            '{:yay [micro] :npm [expo] :pip [thefuck]}
-            '{:yay [nano] :npm [react] :default-manager :yay})
-           v/complex-config)))
+    (is (u/unordered=
+         (u/merge-conf
+          '{:yay [micro] :npm [expo] :pip [thefuck]}
+          '{:yay [nano] :npm [react] :default-manager :yay})
+         v/complex-config)))
 
   (testing "Test overlapping configs"
-    (is (= (u/merge-conf
-            '{:yay [micro nano] :npm [expo] :pip [thefuck]}
-            '{:yay [micro nano] :npm [react] :default-manager :yay})
-           v/complex-config))))
+    (is (u/unordered= (u/merge-conf
+                       '{:yay [micro nano] :npm [expo] :pip [thefuck]}
+                       '{:yay [micro nano] :npm [react] :default-manager :yay})
+                      v/complex-config))))
 
 ;;;;;;;;;;; merge-conf/3 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-merge-conf:3
@@ -139,28 +217,35 @@
     (is (= (u/merge-conf {} {} v/complex-config) v/complex-config)))
 
   (testing "Test merging with the second config full"
-    (is (= (u/merge-conf {} v/complex-config {}) v/complex-config)))
+    (is (u/unordered=
+         (u/merge-conf {} v/complex-config {})
+         v/complex-config)))
 
   (testing "Test merging with the first config full"
-    (is (= (u/merge-conf v/complex-config {} {}) v/complex-config)))
+    (is (u/unordered=
+         (u/merge-conf v/complex-config {} {})
+         v/complex-config)))
 
   (testing "Test merging identical configs"
-    (is (= (u/merge-conf v/complex-config v/complex-config v/complex-config)
-           v/complex-config)))
+    (is (u/unordered=
+         (u/merge-conf v/complex-config v/complex-config v/complex-config)
+         v/complex-config)))
 
   (testing "Test merging three unique configs"
-    (is (= (u/merge-conf
-            '{:npm [expo]}
-            '{:yay [micro] :pip [thefuck]}
-            '{:yay [nano] :npm [react] :default-manager :yay})
-           v/complex-config)))
+    (is (u/unordered=
+         (u/merge-conf
+          '{:npm [expo]}
+          '{:yay [micro] :pip [thefuck]}
+          '{:yay [nano] :npm [react] :default-manager :yay})
+         v/complex-config)))
 
   (testing "Test overlapping configs"
-    (is (= (u/merge-conf
-            '{:npm [expo react]}
-            '{:yay [micro] :pip [thefuck]}
-            '{:yay [nano micro] :npm [react] :default-manager :yay})
-           v/complex-config))))
+    (is (u/unordered=
+         (u/merge-conf
+          '{:npm [expo react]}
+          '{:yay [micro] :pip [thefuck]}
+          '{:yay [nano micro] :npm [react] :default-manager :yay})
+         v/complex-config))))
 
 ;;;;;;;;;;; flat-map->map ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-flat-map->map
@@ -171,29 +256,34 @@
            {})))
 
   (testing "Test with a simple, single input"
-    (is (= (u/flat-map->map v/simple-input v/default-package-manager)
-           {v/default-package-manager '[fzf]})))
+    (is (u/unordered=
+         (u/flat-map->map v/simple-input v/default-package-manager)
+         {v/default-package-manager '[fzf]})))
 
   (testing "Test with a multiple packages from the default manager."
-    (is (= (u/flat-map->map v/multiple-input v/default-package-manager)
-           {v/default-package-manager '[fzf neofetch]})))
+    (is (u/unordered=
+         (u/flat-map->map v/multiple-input v/default-package-manager)
+         {v/default-package-manager '[fzf neofetch]})))
 
   (testing "Test with multiple package managers"
-    (is (= (u/flat-map->map v/multiple-pm-input v/default-package-manager)
-           {v/default-package-manager '[fzf neofetch]
-            :npm '[react]})))
+    (is (u/unordered=
+         (u/flat-map->map v/multiple-pm-input v/default-package-manager)
+         {v/default-package-manager '[fzf neofetch]
+          :npm '[react]})))
 
   (testing "Test with lots of package managers"
-    (is (= (u/flat-map->map v/several-pm-input v/default-package-manager)
-           {v/default-package-manager '[fzf neofetch]
-            :npm '[react]
-            :pip '[thefuck]
-            :gem '[yaml]})))
+    (is (u/unordered=
+         (u/flat-map->map v/several-pm-input v/default-package-manager)
+         {v/default-package-manager '[fzf neofetch]
+          :npm '[react]
+          :pip '[thefuck]
+          :gem '[yaml]})))
 
   (testing "Test with the same package manager repeated in input."
-    (is (= (u/flat-map->map v/same-pm-twice-input v/default-package-manager)
-           {v/default-package-manager '[fzf neofetch atop]
-            :npm '[react expo]}))))
+    (is (u/unordered=
+         (u/flat-map->map v/same-pm-twice-input v/default-package-manager)
+         {v/default-package-manager '[fzf neofetch atop]
+          :npm '[react expo]}))))
 
 ;;;;;;;;;;; remove-from-config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-remove-from-config

@@ -1,31 +1,50 @@
 (ns shan.list
   (:require
+   [clojure.pprint :as pprint]
    [clojure.string :as str]
-   [shan.util :as u]))
+   [clojure.data.json :as json]
+   [shan.util :as u]
+   [shan.managers :as pm]))
 
-(defn cli-list [{:keys [temp _arguments]}]
+(defn print-human [config]
+  (->> (dissoc config :default-manager)
+       (reduce-kv
+        (fn [a k v]
+          (conj a (str (u/bold (name k)) ":\n"
+                       (if (map? v)
+                         (str/join ", " (map #(str (% 0) "=" (% 1)) v))
+                         (str/join ", " v)))))
+        [])
+       (str/join "\n\n")
+       println))
+
+(defn print-parseable [config]
+  (->> (dissoc config :default-manager)
+       (reduce-kv
+        (fn [_ k v]
+          (if (map? v)
+            (mapv #(println (name k) (% 0) (% 1)) v)
+            (mapv #(println (name k) %1) v)))
+        nil)
+       (into [])))
+
+(defn cli-list [{:keys [temp format _arguments]}]
   (letfn [(print-config [config]
-            (->> (dissoc config :default-manager)
-                 (reduce-kv
-                  (fn [a k v]
-                    (conj a (str (u/bold (name k)) ":\n" (str/join ", " v))))
-                  [])
-                 (str/join "\n\n")
-                 println))
-          (config-empty []
-            (println (str "You have no" (if temp " temporary " " ") "packages installed.")))]
-    (cond
-      (not= _arguments []) (println "Too many arguments supplied to list")
+            (if (= config {})
+              (println (str "You have no" (if temp " temporary " " ") "packages installed."))
+              (case format
+                ("human" nil) (print-human config)
+                "parse" (print-parseable config)
+                "edn" (pprint/pprint config)
+                "json" (json/pprint config))))]
+    (if (empty? _arguments)
+      (if (= temp false)
+        (print-config (u/get-new))
+        (print-config (u/get-temp)))
+      ;; TODO: Make this speeby
+      (->> _arguments
+           (mapv #(reduce (fn [a v] (assoc a v [%])) {} (pm/installed-with %)))
+           (apply u/merge-conf)
+           prn))
 
-      (= temp false)
-      (let [conf (u/get-new)]
-        (if (= conf {})
-          (config-empty)
-          (print-config conf)))
-
-      :else
-      (let [conf (u/get-temp)]
-        (if (= conf {})
-          (config-empty)
-          (print-config conf))))
-    (u/exit-code)))
+    @u/exit-code))
