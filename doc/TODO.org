@@ -46,6 +46,7 @@
   - [X] importing packages to start using shan
   - [ ] support adding different mirrors for certain package managers. Ex. Manjaro uses a different
     AUR mirror than Arch Linux.
+    - [ ] update mirrors without updating packages
 - [ ] manager dotfiles
   - [ ] symlink dotfiles from one place to another
 - [ ] install software not in package managers
