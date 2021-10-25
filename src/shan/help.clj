@@ -67,7 +67,7 @@
   (str "\n" (u/bold "PACKAGE MANAGERS:") "\n "
        (str/join ", " (sort (map name managers))) "\n"))
 
-(defn global-help [conf _]
+(defn global-help [conf]
   (print (str (build-name (:command conf) nil (:description conf))
               (build-global-usage (:command conf))
               (build-version (:version conf))

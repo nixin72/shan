@@ -1,6 +1,7 @@
 (ns shan.core
   (:require
-   [cli-matic.core :refer [run-cmd]]
+   #_[cli-matic.core :refer [run-cmd]]
+   [shan.parser :refer [run-cmd]]
    [shan.edit :as edit]
    [shan.install :as install]
    [shan.list :as list]
@@ -48,12 +49,27 @@
        (u/blue "  :yay") " " (u/yellow "[") "nodejs python3 neovim atop" (u/yellow "]") "\n"
        (u/blue "  :npm") " " (u/yellow "[") "atop react" (u/yellow "]") (u/red "}") "\n\n"))
 
-(def opts
+(def help
+  {:as "Show this help page"
+   :default false
+   :option "help"
+   :short "h"
+   :type :with-flag})
+
+(def version
+  {:as "Display software version"
+   :default false
+   :option "version"
+   :short "v"
+   :type :with-flag})
+
+(def config
   {:command "shan"
    :description "A declarative wrapper around your favourite package manager"
    :version c/version
    :global-help help/global-help
    :subcmd-help help/subcommand-help
+   :global-opts [help version]
    :subcommands
    [{:command "default"
      :short "de"
@@ -159,17 +175,18 @@
      :runs (fn [_] (println c/version))}]})
 
 (defn -main [& args]
-  (try
-    (case (first args)
+  (run-cmd ["install" "--help" "-v" "-t" "npm" "-npm" "react"] config)
+  #_(try
+      (case (first args)
       ;; If it looks like the user is trying to get help, help them
-      ("h" "help" "-h" "--help") (run-cmd ["--help"] opts)
+        ("h" "help" "-h" "--help") (run-cmd ["--help"] config)
       ;; Not providing -v and --version breaks a user's general expectations
       ;; since they're pretty standard. Yes, they're also provided with
       ;; v and version subcommands, but *not* having this would break expectations.
-      ("-v" "--version") (run-cmd ["version"] opts)
-      nil
-      (run-cmd ["--help"] opts)
+        ("-v" "--version") (run-cmd ["version"] config)
+        nil
+        (run-cmd ["help"] config)
       ;; Otherwise, just do what they want
-      (run-cmd args opts))
-    (catch clojure.lang.ExceptionInfo _
-      (run-cmd ["--help"] opts))))
+        (run-cmd args config))
+      (catch clojure.lang.ExceptionInfo _
+        (run-cmd ["help"] config))))

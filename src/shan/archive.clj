@@ -1,4 +1,4 @@
-(ns shan.repo
+(ns shan.archive
   (:require
    [shan.util :as u]))
 
