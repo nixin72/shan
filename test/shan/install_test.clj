@@ -10,7 +10,6 @@
    [shan.test-values :as tv]))
 
 ;;;;;;;;;;; test-generate-success-report ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (deftest test-generate-success-report
   (println "Testing function" (u/bold "install/generate-success-report"))
 
@@ -63,12 +62,12 @@
    (testing "Getting finding default package manager without setting it."
      (is (= (with-input-queue '("0" "n")
               (in/find-default-manager tv/install-map-simple-input))
-            '{:paru [fzf]})))
+            (u/make-unordered '{:paru [fzf]}))))
 
    (testing "Getting finding default package manager without setting it."
      (is (= (with-input-queue '("1" "y")
               (in/find-default-manager tv/install-map-simple-input))
-            '{:yay [fzf] :default-manager :yay})))))
+            (u/make-unordered '{:yay [fzf] :default-manager :yay}))))))
 
 ;; NOTE: The following tests are working with stateful code, however they do not
 ;; test the side effects of the changes of state. This code deals with removing
@@ -109,5 +108,5 @@
 
     (testing "All operations completeled successfully"
       (is (= @env (-> tv/pre-installed-packages
-                      (update :yay conj 'micro 'nano)
+                      (update :pacman conj 'micro 'nano)
                       (update :npm conj 'underscore 'react)))))))

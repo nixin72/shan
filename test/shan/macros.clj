@@ -8,11 +8,11 @@
    [shan.managers.npm]
    [shan.test-values :as tv]
    [clojure.string :as str]
-   [shan.managers :as pm]))
+   [shan.managers :as pm]
+   [shan.util :as u]))
 
 (defn make-test-files []
-  (-> c/conf-dir java.io.File. .mkdirs)
-  (-> c/gen-dir java.io.File. .mkdirs)
+  (-> c/data-dir java.io.File. .mkdirs)
   (-> c/conf-file java.io.File. .createNewFile)
   (-> c/temp-file java.io.File. .createNewFile)
   (-> c/gen-file java.io.File. .createNewFile)
@@ -44,19 +44,23 @@
          shan.util/get-old (fn [] [tv/complex-config])
          shan.util/already-installed?
          (fn [installed-fn# package#]
-           (let [pm# (-> (installed-fn# package#) first keyword)]
+           (let [pm# (-> (installed-fn# package#) first keyword)
+                 pm# (or (-> pm# pm/package-managers :uses) pm#)]
              (contains? (get @~env-name pm#) package#)))
          shan.util/add-archive
          (fn [add-fn# archive#]
-           (let [pm# (-> (add-fn# archive#) first keyword)]
+           (let [pm# (-> (add-fn# archive#) first keyword)
+                 pm# (or (-> pm# pm/package-managers :uses) pm#)]
              (swap! ~env-name update-in [:archives pm#] conj archive#)))
          shan.util/install-package
          (fn [install-fn# package#]
-           (let [pm# (-> (install-fn# package#) first keyword)]
-             (swap! ~env-name update pm# conj package#)))
+           (let [pm# (-> (install-fn# package#) first keyword)
+                 pm# (or (-> pm# pm/package-managers :uses) pm#)]
+             (u/identity-prn (swap! ~env-name update pm# conj package#))))
          shan.util/remove-package
          (fn [remove-fn# package#]
-           (let [pm# (-> (remove-fn# package#) first keyword)]
+           (let [pm# (-> (remove-fn# package#) first keyword)
+                 pm# (or (-> pm# pm/package-managers :uses) pm#)]
              (swap! ~env-name update pm# disj package#)))]
          (suppress-stdout ~@body)))))
 
@@ -86,11 +90,10 @@
 
 (defmacro with-test-data [& body]
   `(binding [shan.config/home (str (System/getProperty "user.dir") "/.test")]
-     (binding [shan.config/conf-dir (str shan.config/home "/" shan.config/config)
-               shan.config/gen-dir (str shan.config/home "/" shan.config/local)]
-       (binding [shan.config/conf-file (str shan.config/conf-dir "shan.edn")
-                 shan.config/temp-file (str shan.config/gen-dir "temporary.edn")
-                 shan.config/gen-file (str shan.config/gen-dir "generations.edn")]
+     (binding [shan.config/data-dir (str shan.config/home "/" shan.config/local)]
+       (binding [shan.config/conf-file (str shan.config/data-dir "shan.edn")
+                 shan.config/temp-file (str shan.config/data-dir "temporary.edn")
+                 shan.config/gen-file (str shan.config/data-dir "generations.edn")]
 
          (let [home# (java.io.File. c/home)]
            (when (.exists home#)

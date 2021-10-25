@@ -13,22 +13,22 @@
   (suppress-stdout
    (testing "Test removing from first"
      (is (= (with-input-queue ["0"]
-              (rm/remove-with-pm-from-list [:npm :yay] "atop"))
+              (rm/remove-with-pm-from-list [:npm :pacman] "atop"))
             {:npm ["atop"]})))
 
    (testing "Test removing from second"
      (is (= (with-input-queue ["1"]
-              (rm/remove-with-pm-from-list [:npm :yay] "atop"))
-            {:yay ["atop"]})))
+              (rm/remove-with-pm-from-list [:npm :pacman] "atop"))
+            {:pacman ["atop"]})))
 
    (testing "Test removing from both"
      (is (= (with-input-queue ["2"]
-              (rm/remove-with-pm-from-list [:npm :yay] "atop"))
-            {:yay ["atop"] :npm ["atop"]})))
+              (rm/remove-with-pm-from-list [:npm :pacman] "atop"))
+            {:pacman ["atop"] :npm ["atop"]})))
 
    (testing "Test removing with non-number input"
      (is (= (with-input-queue '("a" "yay" "0")
-              (rm/remove-with-pm-from-list [:npm :yay] "atop"))
+              (rm/remove-with-pm-from-list [:npm :pacman] "atop"))
             {:npm ["atop"]})))))
 
 ;;;;;;;;;;; remove-with-pm-from-installed ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,12 +43,12 @@
 
     (testing "Test with package installed in a single package manager"
       (is (= (rm/remove-with-pm-from-installed 'neovim)
-             '{:yay [neovim]})))
+             '{:pacman [neovim]})))
 
     (testing "Test with package installed in several package managers"
       (is (= (with-input-queue ["0"]
                (rm/remove-with-pm-from-installed 'atop))
-             '{:yay [atop]})))))
+             '{:pacman [atop]})))))
 
 ;;;;;;;;;;; find-package-manager ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-find-package-manager
@@ -57,15 +57,17 @@
   (with-test-env [_ v/pre-installed-packages]
     (testing "Test finding package manager for single package"
       (is (= (rm/find-package-manager v/duplicating-config '[make])
-             '{:yay [make]})))
+             '{:pacman [make]})))
 
     (testing "Test multiple packages from the same package manager"
-      (is (= (rm/find-package-manager v/duplicating-config '[make unzip])
-             '{:yay [make unzip]})))
+      ;; Make this one unordered for the vector test
+      (is (= (u/make-unordered
+              (rm/find-package-manager v/duplicating-config '[make unzip]))
+             '{:pacman #{make unzip}})))
 
     (testing "Test multiple package from various package managers"
       (is (= (rm/find-package-manager v/duplicating-config '[json make])
-             '{:gem [json] :yay [make]})))
+             '{:gem [json] :pacman [make]})))
 
     (testing "Test single package in multiple package managers"
       (is (= (with-input-queue ["0"]
@@ -95,8 +97,7 @@
 
 (defn config->set [config]
   (->> (vals config)
-       (map keys)
-       (apply concat)
+       (mapcat keys)
        (into #{})))
 
 ;;;;;;;;;;; test-cli-remove ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

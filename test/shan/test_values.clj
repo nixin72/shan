@@ -19,7 +19,7 @@
     :choco))
 
 (def pre-installed-packages
-  '{:yay #{atop emacs firefox make man-db neovim readline unzip}
+  '{:pacman #{atop emacs firefox make man-db neovim readline unzip}
     :npm #{atop is-odd}
     :pip #{wakatime thefuck}
     :gem #{csv etc json openssl readline uri yaml}})

@@ -29,6 +29,16 @@
              (if set-default? (assoc x :default-manager pm) x)))))
     install-map))
 
+(defn replace-keys [install-map]
+  (reduce-kv
+   (fn [a k v]
+     (let [alias (-> pm/package-managers k :uses)]
+       (if alias
+         (assoc a alias v)
+         (assoc a k v))))
+   {}
+   install-map))
+
 (defn cli-install [{:keys [verbose temp _arguments]}]
   (let [new-conf (u/get-new)
         install-map (u/flat-map->map _arguments (:default-manager new-conf))
@@ -36,9 +46,13 @@
         result (reduce-kv #(assoc %1 %2 (pm/install-pkgs %2 %3 verbose))
                           {}
                           (dissoc install-map :default-manager))
-        {:keys [success failed commands]} (generate-success-report result)]
+        {:keys [success failed commands]} (generate-success-report result)
+        success (replace-keys success)]
     (when failed
       (println "\nPackages that failed to install were not added to your config."))
+
+    (prn success)
+
     (cond
       temp (u/add-to-temp success)
       (:default-manager install-map)

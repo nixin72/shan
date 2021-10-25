@@ -245,7 +245,6 @@
 (defn remove-generation []
   (try
     (let [old (pop (get-old))]
-      (prn old (empty? old))
       (if (empty? old)
         (write-edn c/gen-file [{}])
         (write-edn c/gen-file old)))

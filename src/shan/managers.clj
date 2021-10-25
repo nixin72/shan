@@ -85,6 +85,9 @@
           (System/exit -1))
       managers)))
 
+(defn set-of-package-managers []
+  (->> (installed-managers) (keys) (map name) (into #{})))
+
 ;; TODO: Figure out how to test
 (defn determine-default-manager
   "Try to determine what the default manager should be if there's no
@@ -178,7 +181,6 @@
 (defn installed-with [pkg]
   (reduce-kv
    (fn [a k v]
-     (prn k)
      (if (-> (:installed? v) (make-fn false) (u/already-installed? pkg))
        (if (contains? v :uses) a
            (conj a k))
