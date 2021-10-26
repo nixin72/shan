@@ -216,6 +216,7 @@
   (try
     (read-edn c/conf-file)
     (catch java.lang.RuntimeException _
+      (prn "ERROR")
       {})))
 
 (defn get-temp []

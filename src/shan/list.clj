@@ -37,10 +37,12 @@
                 "parse" (print-parseable config)
                 "edn" (pprint/pprint config)
                 "json" (json/pprint config))))]
+
     (if (empty? _arguments)
-      (if (= temp false)
+      (if-not  temp
         (print-config (u/get-new))
         (print-config (u/get-temp)))
+
       ;; TODO: Make this speeby
       (->> _arguments
            (mapv #(reduce (fn [a v] (assoc a v [%])) {} (pm/installed-with %)))
@@ -48,3 +50,4 @@
            prn))
 
     @u/exit-code))
+

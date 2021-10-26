@@ -9,11 +9,13 @@
 (defn subcmd [command config]
   (->> config
        :subcommands
-       (filter #(= (:command %) command))
+       (filter #(some #{command} (vals (select-keys % [:command :short]))))
        first))
 
 (defn command [v config]
-  (get (into #{} (map :command (:subcommands config))) v))
+  (get (into #{} (mapcat #(vector (% :command) (% :short))
+                         (:subcommands config)))
+       v))
 
 (defn get-flags [opts]
   (reduce #(if (= (:type %2) :with-flag)
@@ -38,10 +40,10 @@
           {} opts))
 
 (defn option [v command config]
-  (and
-   (get (into (get-options (:global-opts config))
-              (get-options (:opts (subcmd command config))))
-        v)))
+  (and (str/starts-with? v "-")
+       (get (into (get-options (:global-opts config))
+                  (get-options (:opts (subcmd command config))))
+            v)))
 
 (defn unrecognized-option-or-flag [v command config]
   (and (str/starts-with? v "-")
@@ -116,6 +118,11 @@
 
     (when @continue?
       (let [run-fn (:runs (subcmd command config))]
-        (run-fn (merge (reduce #(assoc %1 %2 true) {} flags)
-                       {:_arguments arguments}
-                       options))))))
+        (if (nil? command)
+          (if (first arguments)
+            (u/error "Unknown command" (str (u/bold (first arguments)) ".")
+                     "Use" (u/bold "shan --help") "to see all options.")
+            (u/error "No command specified."))
+          (run-fn (merge (reduce #(assoc %1 %2 true) {} flags)
+                         {:_arguments arguments}
+                         options)))))))
