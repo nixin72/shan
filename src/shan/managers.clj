@@ -177,6 +177,16 @@
       (println "")
       (zipmap (map #(str remove " " %) pkgs) out))))
 
+(defn replace-keys [pkg-map]
+  (reduce-kv
+   (fn [a k v]
+     (let [alias (-> package-managers k :uses)]
+       (if alias
+         (assoc a alias v)
+         (assoc a k v))))
+   {}
+   pkg-map))
+
 ;; TODO: Cache shit to make this go faster, cause it's real slow atm
 (defn installed-with [pkg]
   (reduce-kv

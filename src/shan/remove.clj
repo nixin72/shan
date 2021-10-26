@@ -40,8 +40,9 @@
         remove-map (u/flat-map->map _arguments :default)
         default (find-package-manager (dissoc conf :default-manager)
                                       (:default remove-map))
-        remove-map (dissoc remove-map :default)
-        remove-map (u/merge-conf default remove-map)
+        remove-map (->> (dissoc remove-map :default)
+                        (u/merge-conf default)
+                        (pm/replace-keys))
         out (reduce-kv #(assoc %1 %2 (pm/remove-pkgs %2 %3 verbose))
                        {}
                        remove-map)]

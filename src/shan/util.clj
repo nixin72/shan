@@ -157,7 +157,6 @@
 ;;;;;;;;;;; NOTE: Stateful functions beyond this point ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
 (def exit-code (atom 0))
 (def normal "\033[0m")
 (defn red [string]    (str "\033[0;31m" string normal))
@@ -170,6 +169,10 @@
 (defn error [& arg]
   (reset! exit-code 1)
   (println (-> "Error:" red bold) (str/join " " arg)))
+
+(defn fatal-error [& args]
+  (apply error args)
+  (System/exit @exit-code))
 
 (defn prompt [prompt-string options]
   (try

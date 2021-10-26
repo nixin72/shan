@@ -1,6 +1,5 @@
 (ns shan.core
   (:require
-   #_[cli-matic.core :refer [run-cmd]]
    [shan.parser :refer [run-cmd]]
    [shan.edit :as edit]
    [shan.install :as install]
@@ -86,9 +85,9 @@
                 {:desc (str "Install packages through " (u/blue "yay") ", this config's default package manager")
                  :ex (str (u/green "shan") " install open-jdk vscode")}
                 {:desc "Install packages through a specified package manager"
-                 :ex (str (u/green "shan") " install " (u/blue ":npm") " react-native expo")}
+                 :ex (str (u/green "shan") " install " (u/blue "--npm") " react-native expo")}
                 {:desc "Install packages through various package managers"
-                 :ex (str (u/green "shan") " install open-jdk vscode " (u/blue ":npm") " react-native expo " (u/blue ":pip") " PyYAML")}]
+                 :ex (str (u/green "shan") " install open-jdk vscode " (u/blue "--npm") " react-native expo " (u/blue "--pip") " PyYAML")}]
      :runs install/cli-install
      :opts [verbose? temporary?]}
     {:command "remove"
@@ -175,18 +174,20 @@
      :runs (fn [_] (println c/version))}]})
 
 (defn -main [& args]
-  (run-cmd ["install" "--help" "-v" "-t" "npm" "-npm" "react"] config)
-  #_(try
-      (case (first args)
+  ;; (run-cmd ["install" "--help" "-v" "-t" "--hlp" "npm" "-npm" "react"] config)
+  (try
+    (case (first args)
       ;; If it looks like the user is trying to get help, help them
-        ("h" "help" "-h" "--help") (run-cmd ["--help"] config)
+      ("h" "help" "-h" "--help") (run-cmd ["--help"] config)
       ;; Not providing -v and --version breaks a user's general expectations
       ;; since they're pretty standard. Yes, they're also provided with
       ;; v and version subcommands, but *not* having this would break expectations.
-        ("-v" "--version") (run-cmd ["version"] config)
-        nil
-        (run-cmd ["help"] config)
+      ("-v" "--version") (run-cmd ["version"] config)
+      nil
+      (run-cmd ["help"] config)
       ;; Otherwise, just do what they want
-        (run-cmd args config))
-      (catch clojure.lang.ExceptionInfo _
-        (run-cmd ["help"] config))))
+      (run-cmd args config))
+    (catch clojure.lang.ExceptionInfo _
+      (run-cmd ["help"] config)))
+
+  (System/exit @u/exit-code))

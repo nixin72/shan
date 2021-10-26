@@ -38,10 +38,23 @@
           {} opts))
 
 (defn option [v command config]
+  (and
+   (get (into (get-options (:global-opts config))
+              (get-options (:opts (subcmd command config))))
+        v)))
+
+(defn unrecognized-option-or-flag [v command config]
   (and (str/starts-with? v "-")
-       (get (into (get-options (:global-opts config))
-                  (get-options (:opts (subcmd command config))))
-            v)))
+       (not (get (merge (get-flags (:global-opts config))
+                        (get-flags (:opts (subcmd command config)))
+                        (get-options (:global-opts config))
+                        (get-options (:opts (subcmd command config)))
+                        (reduce-kv
+                         #(assoc
+                           %1 (->> %2 name (str "--")) %3 (->> %2 name (str "-")) %3)
+                         {}
+                         pm/package-managers))
+                 v))))
 
 (defn parse-option [head tail result config]
   (let [opt (option head (:command result) config)
@@ -79,26 +92,30 @@
       (let [[head tail result] (parse-option head tail result config)]
         (recur head tail result))
 
+      (unrecognized-option-or-flag head (:command result) config)
+      (u/fatal-error "Unknown flag" (str (u/bold head) ".")
+                     "Use" (u/bold "shan --help") "to see all options.")
+
       :else
       (recur (first tail) (rest tail) (update result :arguments conj head)))))
 
 (defn run-cmd [arguments config]
   (let [{:keys [command flags options arguments]}
-        (parse-arguments arguments config)]
+        (parse-arguments arguments config)
+        continue? (atom true)]
 
-    (prn command flags options arguments)
+    (when (some #{:help} flags)
+      (reset! continue? false)
+      (if (nil? command)
+        (help/global-help config)
+        (help/subcommand-help config ["shan" command])))
 
-    #_(when (some #{"--help" "-h"} flags)
-        (if (nil? command)
-          (help/global-help config)
-          (help/subcommand-help config ["shan" command])))
+    (when (some #{:version} flags)
+      (reset! continue? false)
+      (println c/version))
 
-    #_(when (some #{"version" "v"} flags)
-        (println c/version))
-
-    ;; (prn command flags options arguments)
-
-    #_(let [run-fn (:runs (subcmd config command))]
-        (prn (merge (reduce #(assoc %1 %2 true) {} flags)
-                    {:_arguments arguments}
-                    options)))))
+    (when @continue?
+      (let [run-fn (:runs (subcmd command config))]
+        (run-fn (merge (reduce #(assoc %1 %2 true) {} flags)
+                       {:_arguments arguments}
+                       options))))))
