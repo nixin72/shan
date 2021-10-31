@@ -108,14 +108,14 @@
      :runs remove/cli-remove
      :opts [verbose? temporary?]}
     {:command "add-archive"
-     :short "ap"
+     :short "aa"
      :category "Managing Packages"
      :arguments *
      :description "Adds package archives for your package managers to use"
      :runs archive/cli-add-ppa
      :opts [verbose? temporary?]}
-    {:command "del-archive"
-     :short "dp"
+    {:command "rem-archive"
+     :short "ra"
      :category "Managing Packages"
      :arguments *
      :description "Removes package archives from your package managers"
@@ -138,16 +138,19 @@
      :runs rollback/cli-rollback}
     {:command "link"
      :short "ln"
+     :category "Linking"
      :arguments *
      :description "Creates symbolic links."
      :runs link/cli-link}
     {:command "unlink"
      :short "ul"
+     :category "Linking"
      :arguments *
      :description "Removes symbolic links."
      :runs link/cli-unlink}
-    {:command "link-recursive"
+    {:command "link-rec"
      :short "lr"
+     :category "Linking"
      :arguments 2
      :description "Creates symbolic links matching a directory structure"
      :desc-long ["Walks recursively through the target directory and creates a "
@@ -187,12 +190,7 @@
      :arguments? 0
      :description "Generates a config for first time use from installed packages"
      :opts [editor]
-     :runs init/cli-init}
-    {:command "version"
-     :short "v"
-     :arguments 0
-     :description "Print the current version of shan"
-     :runs (fn [_] (println c/version))}]})
+     :runs init/cli-init}]})
 
 (defn -main [& args]
   ;; (run-cmd ["install" "--help" "-v" "-t" "--hlp" "npm" "-npm" "react"] config)
@@ -200,15 +198,11 @@
     (case (first args)
       ;; If it looks like the user is trying to get help, help them
       ("h" "help" "-h" "--help") (run-cmd ["--help"] config)
-      ;; Not providing -v and --version breaks a user's general expectations
-      ;; since they're pretty standard. Yes, they're also provided with
-      ;; v and version subcommands, but *not* having this would break expectations.
-      ("-v" "--version") (run-cmd ["version"] config)
       nil
-      (run-cmd ["help"] config)
+      (run-cmd ["--help"] config)
       ;; Otherwise, just do what they want
       (run-cmd args config))
     (catch clojure.lang.ExceptionInfo _
-      (run-cmd ["help"] config)))
+      (run-cmd ["--help"] config)))
 
   (System/exit @u/exit-code))

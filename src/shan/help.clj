@@ -31,13 +31,15 @@
   (str "\n" (u/bold "VERSION:") "\n " version "\n"))
 
 (defn build-command [cmd]
-  (format "\n    %-2s, %-10s %s" (:short cmd) (:command cmd) (:description cmd)))
+  (format "\n    %s, %-11s %s" (:short cmd) (:command cmd) (:description cmd)))
 
 (defn build-commands [commands]
   (->> commands
        (group-by :category)
-       (reduce-kv
-        (fn [a k v]
+       (into (sorted-map))
+       (reverse)
+       (reduce
+        (fn [a [k v]]
           (conj a (str "  " (u/bold (if (nil? k) "Other" k)) ":"
                        (apply str (map (fn [x] (build-command x)) v))
                        "\n")))
