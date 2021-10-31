@@ -157,6 +157,13 @@
 ;;;;;;;;;;; NOTE: Stateful functions beyond this point ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defmacro suppress-stdout [verbose? & body]
+  `(if (not ~verbose?)
+     (do ~@body)
+     (binding [*out* *out*]
+       (set! *out* (io/writer "/dev/null" :append true))
+       ~@body)))
+
 (def exit-code (atom 0))
 (def normal "\033[0m")
 (defn red [string]    (str "\033[0;31m" string normal))
@@ -166,9 +173,13 @@
 (defn grey [string]   (str "\033[0;37m" string normal))
 (defn bold [string]   (str "\033[0;1m"  string normal))
 (defn warning [arg]   (println (-> "Warning:" yellow bold) arg))
+
 (defn error [& arg]
-  (reset! exit-code 1)
-  (println (-> "Error:" red bold) (str/join " " arg)))
+  ;; ensure that errors get printed, even if verbose is turned off
+  (binding [*out* *out*]
+    (set! *out* (io/writer System/err))
+    (reset! exit-code 1)
+    (println (-> "Error:" red bold) (str/join " " arg))))
 
 (defn fatal-error [& args]
   (apply error args)
@@ -216,7 +227,6 @@
   (try
     (read-edn c/conf-file)
     (catch java.lang.RuntimeException _
-      (prn "ERROR")
       {})))
 
 (defn get-temp []
@@ -254,6 +264,9 @@
         (write-edn c/gen-file old)))
     (catch java.io.FileNotFoundException _
       (println "Error occured creating a new generation."))))
+
+(defn write-to-conf [contents] (write-edn c/conf-file contents))
+(defn write-to-temp [contents] (write-edn c/temp-file contents))
 
 (defn add-to-temp
   ([install-map] (add-to-temp (get-temp) install-map))

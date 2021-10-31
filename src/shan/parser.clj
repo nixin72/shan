@@ -118,11 +118,19 @@
 
     (when @continue?
       (let [run-fn (:runs (subcmd command config))]
-        (if (nil? command)
+        (cond
+          (nil? command)
           (if (first arguments)
             (u/error "Unknown command" (str (u/bold (first arguments)) ".")
                      "Use" (u/bold "shan --help") "to see all options.")
             (u/error "No command specified."))
+
+          (nil? run-fn)
+          (u/error "Internal error: no"
+                   (u/bold ":runs")
+                   "key defined for command" (u/bold command))
+
+          :else
           (run-fn (merge (reduce #(assoc %1 %2 true) {} flags)
                          {:_arguments arguments}
                          options)))))))

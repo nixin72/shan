@@ -10,6 +10,7 @@
    [shan.sync :as sync]
    [shan.help :as help]
    [shan.init :as init]
+   [shan.link :as link]
    [shan.archive :as archive]
    [shan.util :as u])
   (:gen-class))
@@ -124,10 +125,10 @@
      :short "sc"
      :arguments? 0
      :description "Syncs your config to get your system up to date"
-     :desc-long ["Installs and removes any packages that have been changed in your config"
-                 "Adds and removes symlinks to files"
-                 "Installs packages from non-package manager sources"
-                 "Runs any scripts specified"]
+     :desc-long ["  - Installs and removes any packages that have been changed in your config\n"
+                 "  - Adds and removes symlinks to files\n"
+                 "  - Installs packages from non-package manager sources\n"
+                 "  - Runs any scripts specified\n"]
      :runs sync/cli-sync
      :opts [verbose?]}
     {:command "rollback"
@@ -135,6 +136,26 @@
      :arguments 0
      :description "Roll back your last change"
      :runs rollback/cli-rollback}
+    {:command "link"
+     :short "ln"
+     :arguments *
+     :description "Creates symbolic links."
+     :runs link/cli-link}
+    {:command "unlink"
+     :short "ul"
+     :arguments *
+     :description "Removes symbolic links."
+     :runs link/cli-unlink}
+    {:command "link-recursive"
+     :short "lr"
+     :arguments 2
+     :description "Creates symbolic links matching a directory structure"
+     :desc-long ["Walks recursively through the target directory and creates a "
+                 "symbolic link for every file in the source.\n"
+                 "If a directory doesn't exist in the target, the entire directory "
+                 "will be linked."]
+     :runs link/cli-link-dotfiles
+     :opts [verbose?]}
     {:command "edit"
      :short "ed"
      :arguments? 0

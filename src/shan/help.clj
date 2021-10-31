@@ -8,7 +8,7 @@
   (str "\n" (u/bold "NAME:") "\n " cmd (if subcmd (str " " subcmd) "") " - " desc "\n"))
 
 (defn build-description [desc]
-  (apply str "\n" (map #(format " - %s\n" %) desc)))
+  (apply str desc))
 
 (defn build-usage [cmd long short options? arguments?]
   (str "\n" (u/bold "USAGE:") "\n " cmd " "
