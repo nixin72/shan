@@ -187,7 +187,7 @@
      :opts [temporary? output-format]}
     {:command "gen"
      :short "ge"
-     :arguments? 0
+     :arguments? *
      :description "Generates a config for first time use from installed packages"
      :opts [editor]
      :runs init/cli-init}]})
