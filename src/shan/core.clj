@@ -125,10 +125,10 @@
      :short "sc"
      :arguments? 0
      :description "Syncs your config to get your system up to date"
-     :desc-long ["  - Installs and removes any packages that have been changed in your config\n"
-                 "  - Adds and removes symlinks to files\n"
-                 "  - Installs packages from non-package manager sources\n"
-                 "  - Runs any scripts specified\n"]
+     :desc-long ["\n - Installs and removes any packages that have been changed in your config"
+                 "\n - Adds and removes symlinks to files"
+                 "\n - Installs packages from non-package manager sources"
+                 "\n - Runs any scripts specified"]
      :runs sync/cli-sync
      :opts [verbose?]}
     {:command "rollback"
@@ -151,12 +151,11 @@
     {:command "link-rec"
      :short "lr"
      :category "Linking"
-     :arguments 2
+     :arguments ["src" "dest"]
      :description "Creates symbolic links matching a directory structure"
-     :desc-long ["Walks recursively through the target directory and creates a "
-                 "symbolic link for every file in the source.\n"
-                 "If a directory doesn't exist in the target, the entire directory "
-                 "will be linked."]
+     :desc-long
+     ["\n Walks recursively through the src directory and for every file, symlinks it in the dest."
+      "\n If a directory doesn't exist in the dest, the directory itself will be linked."]
      :runs link/cli-link-dotfiles
      :opts [verbose?]}
     {:command "edit"

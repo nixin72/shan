@@ -12,7 +12,7 @@
        (filter #(some #{command} (vals (select-keys % [:command :short]))))
        first))
 
-(defn command [v config]
+(defn command? [v config]
   (get (into #{} (mapcat #(vector (% :command) (% :short))
                          (:subcommands config)))
        v))
@@ -83,9 +83,6 @@
     (cond
       (nil? head) result
 
-      (command head config)
-      (recur (first tail) (rest tail) (assoc result :command head))
-
       (flag head (:command result) config)
       (recur (first tail) (rest tail)
              (update result :flags conj (flag head (:command result) config)))
@@ -99,38 +96,43 @@
                      "Use" (u/bold "shan --help") "to see all options.")
 
       :else
-      (recur (first tail) (rest tail) (update result :arguments conj head)))))
+      (recur (first tail) (rest tail)
+             (if (nil? (:command result))
+               ;; First argument goes to the command
+               (assoc result :command head)
+               ;; everything after is an argument to the command
+               (update result :arguments conj head))))))
 
 (defn run-cmd [arguments config]
   (let [{:keys [command flags options arguments]}
-        (parse-arguments arguments config)
-        continue? (atom true)]
+        (parse-arguments arguments config)]
+    (prn command)
+    (cond
+      (nil? (command? command config))
+      (do (u/error "Unknown command" (str (u/bold command) ".")
+                   "Use" (u/bold "shan --help") "to see all options.")
+          (help/global-help config))
 
-    (when (some #{:help} flags)
-      (reset! continue? false)
+      (some #{:help} flags)
       (if (nil? command)
         (help/global-help config)
-        (help/subcommand-help config ["shan" command])))
+        (help/subcommand-help config ["shan" command]))
 
-    (when (some #{:version} flags)
-      (reset! continue? false)
-      (println c/version))
+      (some #{:version} flags)
+      (println c/version)
 
-    (when @continue?
+      (nil? command)
+      (do (u/error "No command specified."
+                   "Use" (u/bold "shan --help") "to see all options.")
+          (help/global-help config))
+
+      :else
       (let [run-fn (:runs (subcmd command config))]
-        (cond
-          (nil? command)
-          (if (first arguments)
-            (u/error "Unknown command" (str (u/bold (first arguments)) ".")
-                     "Use" (u/bold "shan --help") "to see all options.")
-            (u/error "No command specified."))
-
-          (nil? run-fn)
+        (if (nil? run-fn)
           (u/error "Internal error: no"
                    (u/bold ":runs")
                    "key defined for command" (u/bold command))
 
-          :else
           (run-fn (merge (reduce #(assoc %1 %2 true) {} flags)
                          {:_arguments arguments}
                          options)))))))

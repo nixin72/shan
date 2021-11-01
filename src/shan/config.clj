@@ -2,7 +2,7 @@
   (:require
    [clojure.java.io :as io]))
 
-(def version "0.6.0")
+(def version "0.7.0")
 
 (defn file-exists? [file-path]
   (-> file-path io/file .exists))

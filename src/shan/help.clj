@@ -5,21 +5,21 @@
    [shan.managers :as pm]))
 
 (defn build-name [cmd subcmd desc]
-  (str "\n" (u/bold "NAME:") "\n " cmd (if subcmd (str " " subcmd) "") " - " desc "\n"))
+  (str "\n" (u/bold "DESCRIPTION:") "\n " cmd (if subcmd (str " " subcmd) "") " - " desc "\n"))
 
 (defn build-description [desc]
-  (apply str desc))
+  (str (str/join " " desc) "\n"))
 
-(defn build-usage [cmd long short options? arguments?]
+(defn build-usage [cmd long short options? arguments]
   (str "\n" (u/bold "USAGE:") "\n " cmd " "
        (cond (and long short) (str "[" long "|" short "]")
              long long
              short short) " "
        (and options? "[command-options] ")
        (cond
-         (= arguments? *) "[arguments...]"
-         (vector? arguments?) (str "[" (first arguments?) "]")
-         (string? arguments?) arguments?
+         (= arguments *) "[arguments...]"
+         (vector? arguments) (str/join " " (map #(str "<" % ">") arguments))
+         (string? arguments) arguments
          :else "")
        "\n"))
 
@@ -87,7 +87,7 @@
                             (:subcommands setup)))]
     (print (str (build-name cmd subcommand (:description info))
                 (if (:desc-long info) (build-description (:desc-long info)) "")
-                (build-usage cmd (:command info) (:short info) (:opts info) (:arguments? info))
+                (build-usage cmd (:command info) (:short info) (:opts info) (:arguments info))
                 (if (some #{subcommand} #{"install" "in" "remove" "rm" "sync" "sc"})
                   (build-pms (keys (pm/installed-managers)))
                   "")
