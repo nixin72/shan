@@ -106,7 +106,6 @@
 (defn run-cmd [arguments config]
   (let [{:keys [command flags options arguments]}
         (parse-arguments arguments config)]
-    (prn command)
     (cond
       (nil? (command? command config))
       (do (u/error "Unknown command" (str (u/bold command) ".")

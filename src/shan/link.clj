@@ -1,15 +1,29 @@
 (ns shan.link
-  (:import [java.nio.file Files Path Paths FileAlreadyExistsException]
-           [java.nio.file.attribute FileAttribute])
+  (:import [java.nio.file Files Paths FileSystems FileAlreadyExistsException]
+           [java.nio.file.attribute FileAttribute]
+           [java.io File])
   (:require
+   [clojure.string :as str]
+   [clojure.walk :as walk]
    [shan.util :as u :refer [suppress-stdout]]))
 
+(defn create-path [path paths]
+  (Paths/get path (into-array String paths)))
+
 (defn path [path & paths]
-  (Paths/get (if (string? path) path (.toString path))
-             (if (empty? paths)
-               (make-array String 0)
-               (into-array
-                String (map #(if (string? %) % (.toString %)) paths)))))
+  (let [path (.toString path)
+        paths (map #(.toString %) paths)]
+    (cond
+      (or (= path "~")
+          (.startsWith path (str "~" File/separator)))
+      (create-path (str (System/getProperty "user.home") (subs path 1)) paths)
+
+      (.startsWith path "~")
+      (u/fatal-error "Home directory expansion not implemented for explicit usernames."
+                     "\nPlease use the full path to the directory instead.")
+
+      :else
+      (create-path path paths))))
 
 (defn last-segment [path]
   (-> path .iterator iterator-seq last))
@@ -20,7 +34,8 @@
             (path (first %))
             (path (second %))
             (make-array FileAttribute 0))
-           (println "Linking" (.toString (second %)) "to" (.toString (first %)))
+           (println (u/blue "Linking")
+                    (.toString (second %)) "to" (.toString (first %)))
            (catch FileAlreadyExistsException _
              (u/error "Failed to make link to" (str (first %) ":")
                       "File already exists.")))
@@ -47,26 +62,39 @@
 
 (defn exists? [path]
   (-> path .toFile .exists))
+
 (defn is-dir? [path]
   (-> path .toFile .isDirectory))
 
-(defn link-structures [src dest]
-  (let [dir-contents (-> src Files/list .iterator iterator-seq)]
-    (doseq [f dir-contents]
-      (let [appended-dest (path dest (last-segment f))]
-        (cond
-          (.endsWith f ".git")          ; Always ignore .git
-          nil
-          (is-dir? f)                   ; Recurse if it's a directory
-          (if (exists? appended-dest)
-            (link-structures f (path dest (last-segment f)))
-            (create-links {appended-dest f}))
+(defn link-structures [src dest ignore-files]
+  (doseq [f (-> src Files/list .iterator iterator-seq)]
+    (let [appended-dest (.toAbsolutePath (path dest (last-segment f)))]
+      (cond
+        ;; Skip anything matching the .shanignore + .git
+        (walk/walk #(.matches % f) #(some true? %) ignore-files)
+        (println (u/yellow "Skipping") (.toString f))
 
-          :else                         ; Make the symlink
-          (create-links {appended-dest f}))))))
+        ;; Recurse if it's a directory
+        (is-dir? f)
+        (if (exists? appended-dest)
+          (link-structures f (path dest (last-segment f)) ignore-files)
+          (create-links {appended-dest f}))
+
+        ;; Just make a symlink
+        :else
+        (create-links {appended-dest f})))))
 
 (defn cli-link-dotfiles [{:keys [verbose _arguments]}]
-  (let [[src dest] (map #(path %) _arguments)]
+  (let [[src dest] (map #(path %) _arguments)
+        ignore-files
+        (->> (path src ".shanignore")
+             (.toString)
+             (slurp)
+             (str/split-lines)
+             (#(conj % ".git"))         ; Add .git so it's always ignored
+             (map #(.getPathMatcher
+                    (FileSystems/getDefault) (str "glob:**/" %))))]
     (suppress-stdout
      (not verbose)
-     (link-structures src dest))))
+     (link-structures src dest ignore-files))
+    (println "Done.")))
