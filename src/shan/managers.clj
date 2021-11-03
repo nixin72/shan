@@ -2,9 +2,9 @@
   (:require
    [clojure.string :as str]
    [clojure.java.shell :as shell]
-   [shan.managers.npm :as npm]
-   [shan.config :as c]
+   [shan.managers.installed :as installed]
    [shan.managers.list :as list]
+   [shan.config :as c]
    [shan.util :as u]))
 
 (def ^:dynamic package-managers
@@ -54,13 +54,13 @@
          :list list/npm
          :install "npm install --global"
          :remove "npm uninstall --global"
-         :installed? npm/installed?}
+         :installed? installed/npm?}
    :yarn {:type :language
           :uses :npm
           :list list/npm
           :install "npm install --global"
           :remove "npm uninstall --global"
-          :installed? npm/installed?}
+          :installed? installed/npm?}
    :pip {:type :language
          :list list/pip
          :install "python -m pip install"
@@ -69,7 +69,12 @@
    :gem {:type :language
          :list list/gem
          :remove "gem uninstall -x"
-         :installed? "gem list -lie"}})
+         :installed? "gem list -lie"}
+   :gu {:type :language
+        :list list/gu
+        :remove "gu remove"
+        :install "gu install"
+        :installed? installed/gu?}})
 
 (defn installed-managers []
   (let [managers

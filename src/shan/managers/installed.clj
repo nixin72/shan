@@ -1,14 +1,16 @@
-(ns shan.managers.npm
+(ns shan.managers.installed
   (:require
    [clojure.java.shell :as shell]
    [clojure.java.io :as io]
-   [shan.util :as u]))
+   [shan.util :as u]
+   [shan.managers.list :as list]))
+
+(defn gu? [pkg] (some #{pkg} (list/gu)))
 
 (def warned? (atom false))
-
 (def node-path (System/getenv "NODE_PATH"))
 
-(defn installed? [pkg]
+(defn npm? [pkg]
   ;; Only warn them the node-path is not set if:
   ;; 1. They try actually using NPM
   ;; 2. They haven't already been warned yet in this use of shan

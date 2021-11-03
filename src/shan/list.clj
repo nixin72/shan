@@ -6,8 +6,11 @@
    [shan.util :as u]
    [shan.managers :as pm]))
 
+(defn ignore-keys [config]
+  (dissoc config :default-manager :links))
+
 (defn print-human [config]
-  (->> (dissoc config :default-manager)
+  (->> (ignore-keys config)
        (reduce-kv
         (fn [a k v]
           (conj a (str (u/bold (name k)) ":\n"
@@ -19,7 +22,7 @@
        println))
 
 (defn print-parseable [config]
-  (->> (dissoc config :default-manager)
+  (->> (ignore-keys config)
        (reduce-kv
         (fn [_ k v]
           (if (map? v)
@@ -39,7 +42,7 @@
                 "json" (json/pprint config))))]
 
     (if (empty? _arguments)
-      (if-not  temp
+      (if-not temp
         (print-config (u/get-new))
         (print-config (u/get-temp)))
 

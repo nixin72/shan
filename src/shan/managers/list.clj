@@ -70,3 +70,10 @@
                  (map #(hash-map (symbol (first %)) (str/replace (last %) #"[\(\)]" "")))
                  (apply merge))]
     (if preserve-versions? packages (into [] (keys packages)))))
+
+(defn gu []
+  (some->> (sh/sh "gu" "list")
+           :out
+           str/split-lines
+           (drop 2)
+           (mapv #(first (str/split % #" ")))))
