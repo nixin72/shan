@@ -56,7 +56,7 @@
        (apply str "\n" (u/bold "OPTIONS:") "\n")))
 
 (defn build-example [desc ex]
-  (format "   $ %s\n     # %s\n" ex (u/grey desc)))
+  (format "   $ %s\n     # %s\n" ex desc))
 
 (defn build-examples [examples]
   (let [context (if (string? (first examples)) (first examples) false)]

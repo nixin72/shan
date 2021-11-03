@@ -82,7 +82,8 @@
      :category "Managing Packages"
      :arguments? *
      :description "Install packages through any supported package manager"
-     :examples [context
+     :examples [{:desc (str "Set the default package manager to " (u/blue "yay"))
+                 :ex (str (u/green "shan") " default " (u/blue "yay"))}
                 {:desc (str "Install packages through " (u/blue "yay") ", this config's default package manager")
                  :ex (str (u/green "shan") " install open-jdk vscode")}
                 {:desc "Install packages through a specified package manager"
