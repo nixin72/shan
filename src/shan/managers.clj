@@ -76,7 +76,9 @@
         :install "gu install"
         :installed? installed/gu?}})
 
-(defn installed-managers []
+(defn installed-managers
+  "Filter the package managers to just what's installed on the system"
+  []
   (let [managers
         (reduce-kv (fn [a k v]
                      (if (if c/windows?
@@ -90,7 +92,9 @@
           (System/exit -1))
       managers)))
 
-(defn set-of-package-managers []
+(defn set-of-package-managers
+  "Get a set of the names of package managers"
+  []
   (->> (installed-managers) (keys) (map name) (into #{})))
 
 ;; TODO: Figure out how to test
@@ -125,7 +129,9 @@
          true "Would you like to set" (u/bold (name selected)) "as the default package manager")]
     [selected set-selected-as-default?]))
 
-(defn make-fn [command verbose?]
+(defn make-fn
+  "Generate a function that executes a shell command."
+  [command verbose?]
   (cond
     (fn? command) command
     (string? command) (make-fn (str/split command #" ") verbose?)
@@ -184,7 +190,9 @@
       (println "")
       (zipmap (map #(str remove " " %) pkgs) out))))
 
-(defn replace-keys [pkg-map]
+(defn replace-keys
+  "Replaces package managers when one is using another"
+  [pkg-map]
   (reduce-kv
    (fn [a k v]
      (let [alias (-> package-managers k :uses)]
@@ -195,7 +203,9 @@
    pkg-map))
 
 ;; TODO: Cache shit to make this go faster, cause it's real slow atm
-(defn installed-with [pkg]
+(defn installed-with
+  "Find out what package manager pkg is installed with."
+  [pkg]
   (reduce-kv
    (fn [a k v]
      (if (-> (:installed? v) (make-fn false) (u/already-installed? pkg))

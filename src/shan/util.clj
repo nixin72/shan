@@ -195,7 +195,9 @@
     (println (-> "[Error]" red bold)
              (str/join " " arg))))
 
-(defn fatal-error [& args]
+(defn fatal-error
+  "Prints an error and quits."
+  [& args]
   (apply error args)
   (System/exit @exit-code))
 
@@ -211,7 +213,9 @@
       (error "Please enter a number from the selection.")
       (prompt prompt-string options))))
 
-(defn yes-or-no [default & prompt]
+(defn yes-or-no
+  "Basic yes or no prompt."
+  [default & prompt]
   (print (str (str/join " " prompt) "? " (if default "Y/n" "N/y")) " ")
   (flush)
   (let [input (read-line)]
@@ -219,7 +223,9 @@
       default
       (some #{"y" "yes"} [(str/lower-case input)]))))
 
-(defn sh-verbose [& command]
+(defn sh-verbose
+  "Launches a subprocess so that the command can take over stdin/stdout"
+  [& command]
   (let [process (ProcessBuilder. command)
         inherit (java.lang.ProcessBuilder$Redirect/INHERIT)]
     (doto process
@@ -316,14 +322,12 @@
 ;; These are for testing, since I can easily mock them.
 (defn already-installed? [installed-fn package] (installed-fn package))
 (defn add-archive [add-fn archive] (add-fn archive))
+(defn install-package [install-fn package] (install-fn package))
+(defn remove-package [remove-fn package] (remove-fn package))
 
-(defn install-package [install-fn package]
-  #_with-loading (install-fn package))
-
-(defn remove-package [remove-fn package]
-  #_with-loading (remove-fn package))
-
-(defn install-all [pkgs install-fn installed?]
+(defn install-all
+  "Installs all the packages specified in pkgs using the install-fn"
+  [pkgs install-fn installed?]
   (->>
    ;; Put it into a set first to avoid doing the same thing multiple times
    (into (ordered-set) pkgs)
@@ -354,7 +358,9 @@
                  (or (-> "Successfully added!" green println) a)
                  (-> "Failed to add." red println))))))))
 
-(defn remove-all [pkgs remove-fn installed?]
+(defn remove-all
+  "Removes all the packages specified in pkgs using the remove-fn"
+  [pkgs remove-fn installed?]
   (->>
    ;; Avoid doing the same thing twice
    (into (ordered-set) pkgs)
