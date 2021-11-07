@@ -193,6 +193,7 @@
      :runs init/cli-init}]})
 
 (defn -main [& args]
+  (u/log "-main")
   (try
     (case (first args)
       ;; If it looks like the user is trying to get help, help them

@@ -74,40 +74,6 @@
   ;; TODO
   (testing "Test deserializing a config that has PPAs"))
 
-;;;;;;;;;;; make-unordered ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(deftest test-make-unordered
-  (println "Testing function" (u/bold "util/make-unordered"))
-
-  (testing "Test with already unordered structures"
-    (is (= (u/make-unordered {}) {}))
-    (is (= (u/make-unordered #{}) #{})))
-
-  (testing "Test with empty ordered structures"
-    (is (= (u/make-unordered []) #{}))
-    (is (= (u/make-unordered ()) #{}))
-    (is (= (u/make-unordered (ordered-set)) #{}))
-    (is (= (u/make-unordered (ordered-map)) {})))
-
-  (testing "Test with small non-nested unordered structures"
-    (is (= (u/make-unordered {:a :b :c :d}) {:c :d :a :b}))
-    (is (= (u/make-unordered #{:a :b :c}) #{:c :a :b})))
-
-  (testing "Test with small non-nested ordered structures"
-    (is (= (u/make-unordered [:a :b :c :d]) #{:c :d :a :b}))
-    (is (= (u/make-unordered '(:a :b :c)) #{:c :a :b}))
-    (is (= (u/make-unordered (ordered-set :a :b :c)) #{:c :a :b}))
-    (is (= (u/make-unordered (ordered-map :a :b :c :d)) {:c :d :a :b})))
-
-  (testing "Test with small nested unordered structures"
-    (is (= (u/make-unordered {:a [:b :c] :d {:e :f}}) {:a #{:b :c} :d {:e :f}}))
-    (is (= (u/make-unordered #{:a #{:b :c} :d}) #{:a #{:b :c} :d})))
-
-  (testing "Test with small nested ordered structures"
-    (is (= (u/make-unordered [:a [:b :c] :d]) #{:d #{:c :b} :a}))
-    (is (= (u/make-unordered '(:a {:b :c} :d)) #{{:b :c} :a :d}))
-    (is (= (u/make-unordered (ordered-set :a [:b :c] :d)) #{#{:b :c} :a :d}))
-    (is (= (u/make-unordered (ordered-map :a [:b :c])) {:a #{:b :c}}))))
-
 ;;;;;;;;;;; unordered= ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-unordered=
   (println "Testing function" (u/bold "util/unordered="))

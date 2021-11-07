@@ -1,13 +1,13 @@
 (ns shan.macros
   (:require
+   [clojure.string :as str]
    [clojure.java.shell]
    [clojure.java.io :as io]
-   [shan.config :as c]
    [clojure.pprint]
+   [shan.config :as c]
    [shan.util]
-   [shan.managers.npm]
+   [shan.managers.installed]
    [shan.test-values :as tv]
-   [clojure.string :as str]
    [shan.managers :as pm]
    [shan.util :as u]))
 
@@ -38,7 +38,7 @@
        (with-redefs
         [clojure.java.shell/sh (fn [& xs#] {:exit 0 :out xs#})
          clojure.pprint/pprint (fn [& xs#] xs#)
-         shan.managers.npm/installed? (fn [p#] (pm/make-fn "npm list --global"))
+         shan.managers.installed/npm? (fn [p#] (pm/make-fn "npm list --global"))
          shan.util/get-new (fn [] tv/complex-config)
          shan.util/get-temp (fn [] tv/temporary-packages)
          shan.util/get-old (fn [] [tv/complex-config])

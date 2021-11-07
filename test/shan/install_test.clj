@@ -62,12 +62,12 @@
    (testing "Getting finding default package manager without setting it."
      (is (= (with-input-queue '("0" "n")
               (in/find-default-manager tv/install-map-simple-input))
-            (u/make-unordered '{:paru [fzf]}))))
+            (u/serialize '{:paru [fzf]}))))
 
    (testing "Getting finding default package manager without setting it."
      (is (= (with-input-queue '("1" "y")
               (in/find-default-manager tv/install-map-simple-input))
-            (u/make-unordered '{:yay [fzf] :default-manager :yay}))))))
+            (u/serialize '{:yay [fzf] :default-manager :yay}))))))
 
 ;; NOTE: The following tests are working with stateful code, however they do not
 ;; test the side effects of the changes of state. This code deals with removing

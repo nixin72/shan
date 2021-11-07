@@ -6,9 +6,21 @@
    [clojure.data :as data]
    [clojure.set :as set]
    [clojure.string :as str]
+   [clojure.walk :as walk]
    [flatland.ordered.map :refer [ordered-map]]
    [flatland.ordered.set :refer [ordered-set]]
    [shan.config :as c]))
+
+(def ^:dynamic *mout* *out*)
+(def exit-code (atom 0))
+(def normal "\033[0m")
+(defn red [string]    (str "\033[0;31m" string normal))
+(defn green [string]  (str "\033[0;32m" string normal))
+(defn yellow [string] (str "\033[0;33m" string normal))
+(defn blue [string]   (str "\033[0;34m" string normal))
+(defn purple [string] (str "\033[0;35m" string normal))
+(defn grey [string]   (str "\033[0;37m" string normal))
+(defn bold [string]   (str "\033[0;1m"  string normal))
 
 (defn identity-prn [arg]
   (prn arg)
@@ -18,88 +30,71 @@
   (pprint arg)
   arg)
 
+;; ensure that errors get printed, even if verbose is turned off
+(defn log [& arg]
+  (binding [*out* *mout*]
+    (let [time (.format (java.text.SimpleDateFormat. "hh:mm:ss") (java.util.Date.))]
+      (println (-> (str "[" time "]") green bold) (str/join " " arg)))))
+
+(defn warning [& arg]
+  (binding [*out* *mout*]
+    (println (-> "[Warning]" yellow bold)
+             (str/join " " arg))))
+
+(defn error [& arg]
+  (binding [*out* *err*]
+    (reset! exit-code 1)
+    (println (-> "[Error]" red bold)
+             (str/join " " arg))))
+
+(defn fatal-error
+  "Prints an error and quits."
+  [& args]
+  (apply error args)
+  (System/exit @exit-code))
+
 (defn deserialize
-  "Recursively deserializes a data structure so it can be used with the rest of
-  Shan's internal usage of data - which is all symbols and keywords. Things like
-  '@react-navigation/stack' need to be turned into symbols so that equality
-  between things will be true."
-  [config-map]
-  (cond
-    (coll? config-map)
-    (reduce
-     (fn [a v]
-       (cond
-         (map-entry? v)
-         (let [[key val] v]
-           (assoc a (if (string? key) (symbol key) key) (deserialize val)))
-         (coll? v) (conj a (deserialize v))
-         (or (keyword? v) (symbol? v) (number? v)) (conj a v)
-         (string? v) (conj a (symbol v))))
-     (if (map? config-map) (ordered-map) (ordered-set))
-     config-map)
-    :else config-map))
+  "Walk through ds and take every collection value and put it into
+  either an ordered-map or ordered-set."
+  [ds]
+  (walk/walk #(cond
+                (map-entry? %) {(first %) (deserialize (second %))}
+                (coll? %) (deserialize %)
+                :else (str %))
+             #(condp apply [%]
+                vector? (into (ordered-set) %)
+                list? (into (ordered-set) %)
+                set? (into (ordered-set) %)
+                map? (into (ordered-map) %)
+                :else %)
+             ds))
 
 (defn serialize
-  "Recursively serializes a data structure such that it can be read back in.
-  The only instance, as far as I can tell, that something won't be able to be
-  read back in is when the symbol contains special Clojure characters. For
-  instance, npm package naming often contains @ and / symbols in their names,
-  like @react-navigation/stack. This name requires serialization so it can be
-  successfully read back in by Clojure. This means transforming all of these
-  symbols into strings before writing them out to files."
-  [config-map]
-  (if (coll? config-map)
-    (reduce
-     (fn [a v]
-       (cond
-         (map-entry? v)
-         (let [skey (str (first v))
-               key (if (or (str/index-of skey \@)
-                           (str/index-of skey \/))
-                     skey
-                     (first v))]
-           (assoc a key (serialize (second v))))
-         (coll? v) (conj a (serialize v))
-         (or (keyword? v) (string? v) (number? v)) (conj a v)
-         (symbol? v) (conj a (if (= (first (str v)) \@) (str v) v))))
-     (condp instance? config-map
-       flatland.ordered.map.OrderedMap {}
-       flatland.ordered.set.OrderedSet []
-       clojure.lang.PersistentArrayMap {}
-       clojure.lang.PersistentHashSet  []
-       clojure.lang.PersistentVector   []
-       clojure.lang.PersistentList     [])
-     config-map)
-    config-map))
-
-(defn make-unordered
-  "Convert all ordered data structures into some unordered counterpart.
-  Mostly used for testing where order is often irrelevant."
+  "Walk through ds and take every collection value and put it into
+  either a hashmap or a vector."
   [ds]
-  (if (coll? ds)
-    (reduce
-     (fn [a v]
-       (if (map-entry? v)
-         (assoc a (first v) (make-unordered (second v)))
-         (conj a (make-unordered v))))
-     (condp instance? ds
-       flatland.ordered.set.OrderedSet #{}
-       flatland.ordered.map.OrderedMap {}
-       clojure.lang.PersistentArrayMap {}
-       clojure.lang.PersistentHashSet #{}
-       clojure.lang.PersistentVector  #{}
-       clojure.lang.PersistentList    #{}
-       #{})
-     ds)
-    ds))
+  (walk/walk #(cond
+                (map-entry? %) {(first %) (deserialize (second %))}
+                (coll? %) (deserialize %)
+                :else (str %))
+             #(condp instance? %
+                flatland.ordered.map.OrderedMap (into {} %)
+                flatland.ordered.set.OrderedSet (into [] %)
+                clojure.lang.PersistentArrayMap (into {} %)
+                clojure.lang.PersistentHashSet  (into [] %)
+                clojure.lang.PersistentVector   (into [] %)
+                clojure.lang.PersistentList     (into [] %)
+                :else %)
+             ds))
 
 (defn unordered=
   "Test if two data structures are equivalent in that they contain all the
   same elements, but the elements aren't necessarily in the same order."
   [a b]
-  (= (make-unordered a) (make-unordered b)))
+  (= (serialize a) (serialize b)))
 
 (defn do-merge [conf1 conf2]
+  (log "do-merge")
   (reduce-kv (fn [a k v]
                (if (contains? a k)
                  (if (keyword? v)
@@ -124,13 +119,13 @@
    (apply merge-conf (merge-conf conf1 conf2) confs)))
 
 (defn flat-map->map [vector-map default-key]
+  (log "flat-map->map")
   (->> (reduce (fn [a v]
-                 (let [sym (symbol v)
-                       kw (keyword (subs v 1))]
+                 (let [kw (keyword (subs v 1))]
                    (cond
                      (= v (str kw)) (into a [kw []])
-                     (= a []) (into a [default-key [sym]])
-                     :else (conj (pop a) (conj (last a) sym)))))
+                     (= a []) (into a [default-key [v]])
+                     :else (conj (pop a) (conj (last a) v)))))
                []
                vector-map)
        (partition 2)
@@ -142,6 +137,7 @@
                (ordered-map))))
 
 (defn remove-from-config [conf pkgs]
+  (log "remove-from-config")
   (reduce-kv
    (fn [a k v]
      (if (coll? v)
@@ -157,8 +153,6 @@
 ;;;;;;;;;;; NOTE: Stateful functions beyond this point ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defonce ^:dynamic *mout* *out*)
-
 (defmacro suppress-stdout [verbose? & body]
   `(if (not ~verbose?)
      (do ~@body)
@@ -168,40 +162,8 @@
                          ([~'str ~'off ~'len] nil)))]
        ~@body)))
 
-(def exit-code (atom 0))
-(def normal "\033[0m")
-(defn red [string]    (str "\033[0;31m" string normal))
-(defn green [string]  (str "\033[0;32m" string normal))
-(defn yellow [string] (str "\033[0;33m" string normal))
-(defn blue [string]   (str "\033[0;34m" string normal))
-(defn purple [string] (str "\033[0;35m" string normal))
-(defn grey [string]   (str "\033[0;37m" string normal))
-(defn bold [string]   (str "\033[0;1m"  string normal))
-
-;; ensure that errors get printed, even if verbose is turned off
-(defn log [& arg]
-  (binding [*out* *mout*]
-    (println (-> "[INFO]" green bold)
-             (str/join " " arg))))
-
-(defn warning [& arg]
-  (binding [*out* *mout*]
-    (println (-> "[Warning]" yellow bold)
-             (str/join " " arg))))
-
-(defn error [& arg]
-  (binding [*out* *err*]
-    (reset! exit-code 1)
-    (println (-> "[Error]" red bold)
-             (str/join " " arg))))
-
-(defn fatal-error
-  "Prints an error and quits."
-  [& args]
-  (apply error args)
-  (System/exit @exit-code))
-
 (defn prompt [prompt-string options]
+  (log "prompt")
   (try
     (println (str prompt-string "\n"
                   (->> options
@@ -216,6 +178,7 @@
 (defn yes-or-no
   "Basic yes or no prompt."
   [default & prompt]
+  (log "yes-or-no")
   (print (str (str/join " " prompt) "? " (if default "Y/n" "N/y")) " ")
   (flush)
   (let [input (read-line)]
@@ -226,6 +189,7 @@
 (defn sh-verbose
   "Launches a subprocess so that the command can take over stdin/stdout"
   [& command]
+  (log "sh-verbose")
   (let [process (ProcessBuilder. command)
         inherit (java.lang.ProcessBuilder$Redirect/INHERIT)]
     (doto process
@@ -235,6 +199,7 @@
     (.waitFor (.start process))))
 
 (defn read-edn [file-name]
+  (log "read-edn")
   (try
     (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read
          ((fn [x]
@@ -245,6 +210,7 @@
       nil)))
 
 (defn write-edn [file-name edn]
+  (log "write-edn")
   (let [contents (if (vector? edn) (mapv serialize edn) (serialize edn))]
     (try
       (pprint contents (io/writer file-name))
@@ -253,12 +219,14 @@
         nil))))
 
 (defn get-new []
+  (log "get-new")
   (try
     (read-edn c/conf-file)
     (catch java.lang.RuntimeException _
       {})))
 
 (defn get-temp []
+  (log "get-temp")
   (try
     (read-edn c/temp-file)
     (catch java.lang.RuntimeException _ {})
@@ -269,6 +237,7 @@
       {})))
 
 (defn get-old []
+  (log "get-old")
   (try
     (read-edn c/gen-file)
     (catch java.lang.RuntimeException _ [{}])
@@ -279,6 +248,7 @@
       [])))
 
 (defn add-generation [new-conf]
+  (log "add-generation")
   (try
     (let [old (conj (get-old) new-conf)]
       (write-edn c/gen-file old))
@@ -286,6 +256,7 @@
       (println "Error occured creating a new generation."))))
 
 (defn remove-generation []
+  (log "remove-generation")
   (try
     (let [old (pop (get-old))]
       (if (empty? old)
@@ -328,6 +299,7 @@
 (defn install-all
   "Installs all the packages specified in pkgs using the install-fn"
   [pkgs install-fn installed?]
+  (log "install-all")
   (->>
    ;; Put it into a set first to avoid doing the same thing multiple times
    (into (ordered-set) pkgs)
@@ -361,6 +333,7 @@
 (defn remove-all
   "Removes all the packages specified in pkgs using the remove-fn"
   [pkgs remove-fn installed?]
+  (log "remove-all")
   (->>
    ;; Avoid doing the same thing twice
    (into (ordered-set) pkgs)

@@ -61,7 +61,7 @@
 
     (testing "Test multiple packages from the same package manager"
       ;; Make this one unordered for the vector test
-      (is (= (u/make-unordered
+      (is (= (u/serialize
               (rm/find-package-manager v/duplicating-config '[make unzip]))
              '{:pacman #{make unzip}})))
 

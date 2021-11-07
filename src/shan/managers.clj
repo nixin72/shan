@@ -168,7 +168,7 @@
     (println "Installing" (u/bold (name manager)) "packages:")
     (let [{:keys [install installed?]} pm
           out (u/install-all
-               pkgs (make-fn install verbose?) (make-fn installed? verbose?))]
+               pkgs (make-fn install verbose?) (make-fn installed? false))]
       (println "")
       (zipmap (map #(str install " " %) pkgs) out))))
 
@@ -186,7 +186,7 @@
     (let [{:keys [remove installed?]} pm
           _ (println "Uninstalling" (u/bold (name manager)) "packages:")
           out (u/remove-all
-               pkgs (make-fn remove verbose?) (make-fn installed? verbose?))]
+               pkgs (make-fn remove verbose?) (make-fn installed? false))]
       (println "")
       (zipmap (map #(str remove " " %) pkgs) out))))
 
