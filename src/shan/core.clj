@@ -15,11 +15,11 @@
    [shan.util :as u])
   (:gen-class))
 
-(def verbose?
-  {:as "Performs the action verbosely."
+(def check?
+  {:as "Lets package managers take over stdin/stdout"
    :default false
-   :option "verbose"
-   :short "v"
+   :option "check"
+   :short "c"
    :type :with-flag})
 
 (def temporary?
@@ -91,7 +91,7 @@
                 {:desc "Install packages through various package managers"
                  :ex (str (u/green "shan") " install open-jdk vscode " (u/blue "--npm") " react-native expo " (u/blue "--pip") " PyYAML")}]
      :runs install/cli-install
-     :opts [verbose? temporary?]}
+     :opts [check? temporary?]}
     {:command "remove"
      :short "rm"
      :category "Managing Packages"
@@ -107,21 +107,21 @@
                 {:desc "Removes emacs after searching to find out what installed it."
                  :ex (str (u/green "shan") " remove emacs")}]
      :runs remove/cli-remove
-     :opts [verbose? temporary?]}
+     :opts [check? temporary?]}
     {:command "add-archive"
      :short "aa"
      :category "Managing Packages"
      :arguments *
      :description "Adds package archives for your package managers to use"
      :runs archive/cli-add-ppa
-     :opts [verbose? temporary?]}
+     :opts [check? temporary?]}
     {:command "rem-archive"
      :short "ra"
      :category "Managing Packages"
      :arguments *
      :description "Removes package archives from your package managers"
      :runs archive/cli-del-ppa
-     :opts [verbose? temporary?]}
+     :opts [check? temporary?]}
     {:command "sync"
      :short "sc"
      :arguments? 0
@@ -131,7 +131,7 @@
                  "\n - Installs packages from non-package manager sources"
                  "\n - Runs any scripts specified"]
      :runs sync/cli-sync
-     :opts [verbose?]}
+     :opts [check?]}
     {:command "rollback"
      :short "rb"
      :arguments 0
@@ -158,7 +158,7 @@
      ["\n Walks recursively through the src directory and for every file, symlinks it in the dest."
       "\n If a directory doesn't exist in the dest, the directory itself will be linked."]
      :runs link/cli-link-dotfiles
-     :opts [verbose?]}
+     :opts [check?]}
     {:command "edit"
      :short "ed"
      :arguments? 0
@@ -170,7 +170,7 @@
      :category "Managing Packages"
      :arguments? 0
      :description "Purges all temporary packages from your system"
-     :opts [verbose?]
+     :opts [check?]
      :runs edit/cli-purge}
     {:command "merge"
      :short "mg"
@@ -193,7 +193,6 @@
      :runs init/cli-init}]})
 
 (defn -main [& args]
-  ;; (run-cmd ["install" "--help" "-v" "-t" "--hlp" "npm" "-npm" "react"] config)
   (try
     (case (first args)
       ;; If it looks like the user is trying to get help, help them

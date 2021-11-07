@@ -84,17 +84,19 @@
         :else
         (create-links {appended-dest f})))))
 
-(defn cli-link-dotfiles [{:keys [verbose _arguments]}]
+(defn parse-shanignore [path]
+  (->> (path path ".shanignore")
+       (.toString)
+       (slurp)
+       (str/split-lines)
+       (#(conj % ".git"))         ; Add .git so it's always ignored
+       (map #(.getPathMatcher
+              (FileSystems/getDefault) (str "glob:**/" %)))))
+
+(defn cli-link-dotfiles [{:keys [check _arguments]}]
   (let [[src dest] (map #(path %) _arguments)
-        ignore-files
-        (->> (path src ".shanignore")
-             (.toString)
-             (slurp)
-             (str/split-lines)
-             (#(conj % ".git"))         ; Add .git so it's always ignored
-             (map #(.getPathMatcher
-                    (FileSystems/getDefault) (str "glob:**/" %))))]
+        ignore-files (parse-shanignore src)]
     (suppress-stdout
-     (not verbose)
+     (not check)
      (link-structures src dest ignore-files))
     (println "Done.")))

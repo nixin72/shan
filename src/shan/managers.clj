@@ -114,24 +114,25 @@
           (= (count system) 1) system
           (> (count system) 1) (u/prompt
                                 (str "Several system package managers were found. "
-                                     "Which one would you like to use?")
+                                     "Which one would you like to use")
                                 system)
           :else (u/prompt
                  (str "No system package managers could be found. "
-                      "Which other package manager would you like to use?")
+                      "Which other package manager would you like to use")
                  language))
         set-selected-as-default?
         (u/yes-or-no
-         true "Would you like to set" (u/bold (name selected)) "as the default package manager?")]
+         true "Would you like to set" (u/bold (name selected)) "as the default package manager")]
     [selected set-selected-as-default?]))
 
 (defn make-fn [command verbose?]
   (cond
     (fn? command) command
     (string? command) (make-fn (str/split command #" ") verbose?)
-    (vector? command) #(let [out (apply shell/sh (conj command (str %)))]
-                         (when verbose?
-                           (println "\n" out))
+    (vector? command) #(let [cmd (conj command (str %))
+                             out (if verbose?
+                                   (apply u/sh-verbose cmd)
+                                   (apply shell/sh cmd))]
                          (if c/testing?
                            (:out out)
                            (= 0 (:exit out))))))
@@ -175,6 +176,7 @@
 
 (defn remove-pkgs [manager pkgs verbose?]
   (with-package-manager [pm manager]
+
     (let [{:keys [remove installed?]} pm
           _ (println "Uninstalling" (u/bold (name manager)) "packages:")
           out (u/remove-all

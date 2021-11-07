@@ -35,7 +35,7 @@
                :else (remove-with-pm-from-list pms pkg))))
          pkgs)))
 
-(defn cli-remove [{:keys [verbose temp _arguments]}]
+(defn cli-remove [{:keys [check temp _arguments]}]
   (let [conf (if temp (u/get-temp) (u/get-new))
         remove-map (u/flat-map->map _arguments :default)
         default (find-package-manager (dissoc conf :default-manager)
@@ -43,7 +43,7 @@
         remove-map (->> (dissoc remove-map :default)
                         (u/merge-conf default)
                         (pm/replace-keys))
-        out (reduce-kv #(assoc %1 %2 (pm/remove-pkgs %2 %3 verbose))
+        out (reduce-kv #(assoc %1 %2 (pm/remove-pkgs %2 %3 check))
                        {}
                        remove-map)]
     (if temp

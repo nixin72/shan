@@ -157,11 +157,15 @@
 ;;;;;;;;;;; NOTE: Stateful functions beyond this point ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defonce ^:dynamic *mout* *out*)
+
 (defmacro suppress-stdout [verbose? & body]
   `(if (not ~verbose?)
      (do ~@body)
-     (binding [*out* *out*]
-       (set! *out* (io/writer "/dev/null" :append true))
+     (binding [*out* (proxy [~'java.io.StringWriter] []
+                       (write
+                         ([~'str] nil)
+                         ([~'str ~'off ~'len] nil)))]
        ~@body)))
 
 (def exit-code (atom 0))
@@ -170,16 +174,26 @@
 (defn green [string]  (str "\033[0;32m" string normal))
 (defn yellow [string] (str "\033[0;33m" string normal))
 (defn blue [string]   (str "\033[0;34m" string normal))
+(defn purple [string] (str "\033[0;35m" string normal))
 (defn grey [string]   (str "\033[0;37m" string normal))
 (defn bold [string]   (str "\033[0;1m"  string normal))
-(defn warning [arg]   (println (-> "Warning:" yellow bold) arg))
+
+;; ensure that errors get printed, even if verbose is turned off
+(defn log [& arg]
+  (binding [*out* *mout*]
+    (println (-> "[INFO]" green bold)
+             (str/join " " arg))))
+
+(defn warning [& arg]
+  (binding [*out* *mout*]
+    (println (-> "[Warning]" yellow bold)
+             (str/join " " arg))))
 
 (defn error [& arg]
-  ;; ensure that errors get printed, even if verbose is turned off
-  (binding [*out* *out*]
-    (set! *out* (io/writer System/err))
+  (binding [*out* *err*]
     (reset! exit-code 1)
-    (println (-> "Error:" red bold) (str/join " " arg))))
+    (println (-> "[Error]" red bold)
+             (str/join " " arg))))
 
 (defn fatal-error [& args]
   (apply error args)
@@ -204,6 +218,15 @@
     (if (= input "")
       default
       (some #{"y" "yes"} [(str/lower-case input)]))))
+
+(defn sh-verbose [& command]
+  (let [process (ProcessBuilder. command)
+        inherit (java.lang.ProcessBuilder$Redirect/INHERIT)]
+    (doto process
+      (.redirectOutput inherit)
+      (.redirectError inherit)
+      (.redirectInput inherit))
+    (.waitFor (.start process))))
 
 (defn read-edn [file-name]
   (try
@@ -293,8 +316,12 @@
 ;; These are for testing, since I can easily mock them.
 (defn already-installed? [installed-fn package] (installed-fn package))
 (defn add-archive [add-fn archive] (add-fn archive))
-(defn install-package [install-fn package] (install-fn package))
-(defn remove-package [remove-fn package] (remove-fn package))
+
+(defn install-package [install-fn package]
+  #_with-loading (install-fn package))
+
+(defn remove-package [remove-fn package]
+  #_with-loading (remove-fn package))
 
 (defn install-all [pkgs install-fn installed?]
   (->>

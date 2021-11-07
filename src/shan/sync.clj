@@ -5,7 +5,7 @@
    [shan.config :as c]
    [shan.managers :as pm]))
 
-(defn cli-sync [{:keys [verbose]}]
+(defn cli-sync [{:keys [check]}]
   (let [old-config (u/get-old)
         last-config (last old-config)
         new-config (dissoc (u/get-new) :default-manager)
@@ -16,6 +16,6 @@
       (u/add-generation new-config))
 
     (if c/testing?
-      [(reduce-kv #(assoc %1 %2 (when %3 (pm/install-pkgs %2 %3 verbose))) {} add)
-       (reduce-kv #(assoc %1 %2 (when %3 (pm/remove-pkgs %2 %3 verbose))) {} del)]
+      [(reduce-kv #(assoc %1 %2 (when %3 (pm/install-pkgs %2 %3 check))) {} add)
+       (reduce-kv #(assoc %1 %2 (when %3 (pm/remove-pkgs %2 %3 check))) {} del)]
       u/exit-code)))

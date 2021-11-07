@@ -29,11 +29,11 @@
              (if set-default? (assoc x :default-manager pm) x)))))
     install-map))
 
-(defn cli-install [{:keys [verbose temp _arguments]}]
+(defn cli-install [{:keys [check temp _arguments]}]
   (let [new-conf (u/get-new)
         install-map (u/flat-map->map _arguments (:default-manager new-conf))
         install-map (find-default-manager install-map)
-        result (reduce-kv #(assoc %1 %2 (pm/install-pkgs %2 %3 verbose))
+        result (reduce-kv #(assoc %1 %2 (pm/install-pkgs %2 %3 check))
                           {}
                           (dissoc install-map :default-manager))
         {:keys [success failed commands]} (generate-success-report result)
