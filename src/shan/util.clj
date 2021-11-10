@@ -7,8 +7,8 @@
    [clojure.set :as set]
    [clojure.string :as str]
    [clojure.walk :as walk]
-   [flatland.ordered.map :refer [ordered-map]]
-   [flatland.ordered.set :refer [ordered-set]]
+   [flatland.ordered.map :as omap :refer [ordered-map]]
+   [flatland.ordered.set :as oset :refer [ordered-set]]
    [shan.config :as c]))
 
 (def ^:dynamic *mout* *out*)
@@ -53,39 +53,24 @@
   (apply error args)
   (System/exit @exit-code))
 
-(defn deserialize
-  "Walk through ds and take every collection value and put it into
-  either an ordered-map or ordered-set."
-  [ds]
-  (walk/walk #(cond
-                (map-entry? %) {(first %) (deserialize (second %))}
-                (coll? %) (deserialize %)
-                :else (str %))
-             #(condp apply [%]
-                vector? (into (ordered-set) %)
-                list? (into (ordered-set) %)
-                set? (into (ordered-set) %)
-                map? (into (ordered-map) %)
-                :else %)
-             ds))
+(defn deserialize [ds]
+  (log "deserialize")
+  (walk/prewalk #(cond
+                   (map? %) (into (ordered-map) %)
+                   ((some-fn vector? list? set? %)) (into (ordered-set) %)
+                   (symbol? %) (str %)
+                   :else %)
+                ds))
 
-(defn serialize
-  "Walk through ds and take every collection value and put it into
-  either a hashmap or a vector."
-  [ds]
-  (walk/walk #(cond
-                (map-entry? %) {(first %) (deserialize (second %))}
-                (coll? %) (deserialize %)
-                :else (str %))
-             #(condp instance? %
-                flatland.ordered.map.OrderedMap (into {} %)
-                flatland.ordered.set.OrderedSet (into [] %)
-                clojure.lang.PersistentArrayMap (into {} %)
-                clojure.lang.PersistentHashSet  (into [] %)
-                clojure.lang.PersistentVector   (into [] %)
-                clojure.lang.PersistentList     (into [] %)
-                :else %)
-             ds))
+(defn serialize [ds]
+  (log "serialize")
+  (walk/prewalk #(cond
+                   (instance? flatland.ordered.map.OrderedMap %) (into {} %)
+                   (instance? flatland.ordered.set.OrderedSet %) (into [] %)
+                   (map? %) (into {} %)
+                   ((some-fn vector? list? set?) %) (into [] %)
+                   :else %)
+                ds))
 
 (defn unordered=
   "Test if two data structures are equivalent in that they contain all the
@@ -201,17 +186,13 @@
 (defn read-edn [file-name]
   (log "read-edn")
   (try
-    (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read
-         ((fn [x]
-            (if (vector? x)
-              (mapv deserialize x)
-              (deserialize x)))))
+    (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read deserialize)
     (catch java.io.FileNotFoundException _
       nil)))
 
 (defn write-edn [file-name edn]
   (log "write-edn")
-  (let [contents (if (vector? edn) (mapv serialize edn) (serialize edn))]
+  (let [contents (serialize edn)]
     (try
       (pprint contents (io/writer file-name))
       contents
