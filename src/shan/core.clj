@@ -193,7 +193,6 @@
      :runs init/cli-init}]})
 
 (defn -main [& args]
-  (u/log "-main")
   (try
     (case (first args)
       ;; If it looks like the user is trying to get help, help them
@@ -205,4 +204,14 @@
     (catch clojure.lang.ExceptionInfo _
       (run-cmd ["--help"] config)))
 
-  (System/exit @u/exit-code))
+  @u/exit-code)
+
+(comment
+  "Some tests:"
+  (-main "install" "htop")
+  (-main "install" "htop" "atop")
+  (-main "install" "yay")
+  (-main "install" "yay")
+  (-main "install" "yay")
+
+  "end test")

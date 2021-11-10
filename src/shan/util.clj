@@ -54,7 +54,6 @@
   (System/exit @exit-code))
 
 (defn deserialize [ds]
-  (log "deserialize")
   (walk/prewalk #(cond
                    (map? %) (into (ordered-map) %)
                    ((some-fn vector? list? set? %)) (into (ordered-set) %)
@@ -63,7 +62,6 @@
                 ds))
 
 (defn serialize [ds]
-  (log "serialize")
   (walk/prewalk #(cond
                    (instance? flatland.ordered.map.OrderedMap %) (into {} %)
                    (instance? flatland.ordered.set.OrderedSet %) (into [] %)
@@ -79,7 +77,6 @@
   (= (serialize a) (serialize b)))
 
 (defn do-merge [conf1 conf2]
-  (log "do-merge")
   (reduce-kv (fn [a k v]
                (if (contains? a k)
                  (if (keyword? v)
@@ -104,7 +101,6 @@
    (apply merge-conf (merge-conf conf1 conf2) confs)))
 
 (defn flat-map->map [vector-map default-key]
-  (log "flat-map->map")
   (->> (reduce (fn [a v]
                  (let [kw (keyword (subs v 1))]
                    (cond
@@ -122,7 +118,6 @@
                (ordered-map))))
 
 (defn remove-from-config [conf pkgs]
-  (log "remove-from-config")
   (reduce-kv
    (fn [a k v]
      (if (coll? v)
@@ -148,7 +143,6 @@
        ~@body)))
 
 (defn prompt [prompt-string options]
-  (log "prompt")
   (try
     (println (str prompt-string "\n"
                   (->> options
@@ -163,7 +157,6 @@
 (defn yes-or-no
   "Basic yes or no prompt."
   [default & prompt]
-  (log "yes-or-no")
   (print (str (str/join " " prompt) "? " (if default "Y/n" "N/y")) " ")
   (flush)
   (let [input (read-line)]
@@ -174,7 +167,6 @@
 (defn sh-verbose
   "Launches a subprocess so that the command can take over stdin/stdout"
   [& command]
-  (log "sh-verbose")
   (let [process (ProcessBuilder. command)
         inherit (java.lang.ProcessBuilder$Redirect/INHERIT)]
     (doto process
@@ -184,14 +176,12 @@
     (.waitFor (.start process))))
 
 (defn read-edn [file-name]
-  (log "read-edn")
   (try
     (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read deserialize)
     (catch java.io.FileNotFoundException _
       nil)))
 
 (defn write-edn [file-name edn]
-  (log "write-edn")
   (let [contents (serialize edn)]
     (try
       (pprint contents (io/writer file-name))
@@ -200,14 +190,12 @@
         nil))))
 
 (defn get-new []
-  (log "get-new")
   (try
     (read-edn c/conf-file)
     (catch java.lang.RuntimeException _
       {})))
 
 (defn get-temp []
-  (log "get-temp")
   (try
     (read-edn c/temp-file)
     (catch java.lang.RuntimeException _ {})
@@ -218,7 +206,6 @@
       {})))
 
 (defn get-old []
-  (log "get-old")
   (try
     (read-edn c/gen-file)
     (catch java.lang.RuntimeException _ [{}])
@@ -229,7 +216,6 @@
       [])))
 
 (defn add-generation [new-conf]
-  (log "add-generation")
   (try
     (let [old (conj (get-old) new-conf)]
       (write-edn c/gen-file old))
@@ -237,7 +223,6 @@
       (println "Error occured creating a new generation."))))
 
 (defn remove-generation []
-  (log "remove-generation")
   (try
     (let [old (pop (get-old))]
       (if (empty? old)
@@ -280,7 +265,6 @@
 (defn install-all
   "Installs all the packages specified in pkgs using the install-fn"
   [pkgs install-fn installed?]
-  (log "install-all")
   (->>
    ;; Put it into a set first to avoid doing the same thing multiple times
    (into (ordered-set) pkgs)
@@ -314,7 +298,6 @@
 (defn remove-all
   "Removes all the packages specified in pkgs using the remove-fn"
   [pkgs remove-fn installed?]
-  (log "remove-all")
   (->>
    ;; Avoid doing the same thing twice
    (into (ordered-set) pkgs)
