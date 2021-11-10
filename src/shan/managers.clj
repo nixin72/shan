@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as str]
    [clojure.java.shell :as shell]
+   [shan.print :as p]
    [shan.managers.installed :as installed]
    [shan.managers.list :as list]
    [shan.config :as c]
@@ -88,8 +89,8 @@
                        a))
                    {} package-managers)]
     (if (empty? managers)
-      (do (u/error "No known package managers available on your system")
-          (System/exit -1))
+      (p/fatal-error "No known package managers available on your system")
+
       managers)))
 
 (defn set-of-package-managers
@@ -126,7 +127,7 @@
                  language))
         set-selected-as-default?
         (u/yes-or-no
-         true "Would you like to set" (u/bold (name selected)) "as the default package manager")]
+         true "Would you like to set" (p/bold (name selected)) "as the default package manager")]
     [selected set-selected-as-default?]))
 
 (defn make-fn
@@ -144,13 +145,15 @@
                            (= 0 (:exit out))))))
 
 (defn unknown-package-manager [manager]
-  (u/error (str (u/bold (name manager)) " is not a package manager known by shan.\n"
-                "Please make an issue on our GitHub repository if you want it to be included.")))
+  (p/error (p/bold (name manager))
+           " is not a package manager known by shan.\n"
+           "Please make an issue on our GitHub repository if you want it to be included."))
 
 (defn unavailable-package-manager [manager]
-  (u/error (str (u/bold (name manager)) " does not appear to be installed on your system.\n"
-                "If it is, please ensure that it's available in your $PATH.\n"
-                "If it is in your path and this still isn't working, please make an issue on our GitHub repository.")))
+  (p/error (p/bold (name manager))
+           " does not appear to be installed on your system.\n"
+           "If it is, please ensure that it's available in your $PATH.\n"
+           "If it is in your path and this still isn't working, please make an issue on our GitHub repository."))
 
 (defmacro with-package-manager [[manager-details package-manager] & body]
   `(let [~manager-details (get (installed-managers) ~package-manager)]
@@ -165,29 +168,29 @@
     (when (contains? pm :pre-install)
       (apply (make-fn (:pre-install pm) verbose?) []))
 
-    (println "Installing" (u/bold (name manager)) "packages:")
+    (p/logln "Installing" (p/bold (name manager)) "packages:")
     (let [{:keys [install installed?]} pm
           out (u/install-all
                pkgs (make-fn install verbose?) (make-fn installed? false))]
-      (println "")
+      (newline)
       (zipmap (map #(str install " " %) pkgs) out))))
 
 (defn add-archives [manager ppas verbose?]
   (with-package-manager [pm manager]
-    (println "Adding package archives for:" (u/bold (name manager)))
+    (p/logln "Adding package archives for:" (p/bold (name manager)))
     (let [{:keys [add-ppas]} pm
           out (u/add-all-archives ppas (make-fn add-ppas verbose?))]
-      (println "")
+      (newline)
       (zipmap (map #(str add-ppas " " %) ppas) out))))
 
 (defn remove-pkgs [manager pkgs verbose?]
   (with-package-manager [pm manager]
 
+    (p/logln "Uninstalling" (p/bold (name manager)) "packages:")
     (let [{:keys [remove installed?]} pm
-          _ (println "Uninstalling" (u/bold (name manager)) "packages:")
           out (u/remove-all
                pkgs (make-fn remove verbose?) (make-fn installed? false))]
-      (println "")
+      (newline)
       (zipmap (map #(str remove " " %) pkgs) out))))
 
 (defn replace-keys

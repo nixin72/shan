@@ -1,13 +1,14 @@
 (ns shan.remove
   (:require
    [clojure.java.shell]
+   [shan.print :as p]
    [shan.util :as u]
    [shan.config :as c]
    [shan.managers :as pm]))
 
 (defn remove-with-pm-from-list [pms pkg]
   (let [pm (u/prompt (str "Which package manager(s) would you like to remove "
-                          (u/blue pkg)  " using?\n")
+                          (p/blue pkg)  " using?\n")
                      (conj pms :all))]
     (if (= pm :all)
       (reduce #(assoc %1 %2 [pkg]) {} pms)
@@ -17,8 +18,9 @@
   (let [pms (pm/installed-with pkg)]
     (cond
       (= (count pms) 0)
-      (do (u/warning (str "Package '" (u/bold pkg)
-                          "' isn't installed in any package manager known by Shan."))
+      (do (p/warnln "Package '"
+                    (p/bold pkg)
+                    "' isn't installed in any package manager known by Shan.")
           {})
       (= (count pms) 1) {(first pms) [pkg]}
       :else (remove-with-pm-from-list pms pkg))))
@@ -49,4 +51,4 @@
     (if temp
       (u/remove-from-temp conf remove-map)
       (u/remove-from-conf conf remove-map))
-    (if c/testing? out u/exit-code)))
+    (if c/testing? out p/exit-code)))

@@ -3,12 +3,13 @@
    [clojure.data.json :as json]
    [clojure.string :as str]
    [clojure.java.shell :as sh]
+   [shan.print :as p]
    [shan.util :as u]))
 
 (def preserve-prompt "Would you like to preserve version numbers for")
 
 (defn brew []
-  (let [preserve-versions? (u/yes-or-no false preserve-prompt (u/bold "brew"))
+  (let [preserve-versions? (u/yes-or-no false preserve-prompt (p/bold "brew"))
         packages (->> (sh/sh "brew" "list" "--versions")
                       :out
                       str/split-lines
@@ -20,7 +21,7 @@
   (->> (sh/sh "pacman" "-Qqett") :out str/split-lines (into [])))
 
 (defn npm []
-  (let [preserve-versions? (u/yes-or-no false preserve-prompt (u/bold "npm"))
+  (let [preserve-versions? (u/yes-or-no false preserve-prompt (p/bold "npm"))
         packages
         (some->>
          (sh/sh "npm" "list" "-g" "--depth" "0" "--json" "true")
@@ -51,7 +52,7 @@
     (if preserve-versions? packages (into [] (keys packages)))))
 
 (defn pip []
-  (let [preserve-versions? (u/yes-or-no false preserve-prompt (u/bold "pip"))
+  (let [preserve-versions? (u/yes-or-no false preserve-prompt (p/bold "pip"))
         packages
         (->> (sh/sh "python" "-m" "pip" "list" "--user" "--exclude" "pip" "--format" "json")
              :out
@@ -61,7 +62,7 @@
     (if preserve-versions? packages (into [] (keys packages)))))
 
 (defn gem []
-  (let [preserve-versions? (u/yes-or-no false preserve-prompt (u/bold "gem"))
+  (let [preserve-versions? (u/yes-or-no false preserve-prompt (p/bold "gem"))
         packages
         (some->> (sh/sh "gem" "list" "--local")
                  :out

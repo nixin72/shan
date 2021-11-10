@@ -1,6 +1,7 @@
 (ns shan.core
   (:require
    [shan.parser :refer [run-cmd]]
+   [shan.print :as p]
    [shan.edit :as edit]
    [shan.install :as install]
    [shan.list :as list]
@@ -45,9 +46,9 @@
 
 (def context
   (str " Given the following shan.edn config file:\n"
-       (u/red " {") (u/blue ":default-manager :yay") "\n"
-       (u/blue "  :yay") " " (u/yellow "[") "nodejs python3 neovim atop" (u/yellow "]") "\n"
-       (u/blue "  :npm") " " (u/yellow "[") "atop react" (u/yellow "]") (u/red "}") "\n\n"))
+       (p/red " {") (p/blue ":default-manager :yay") "\n"
+       (p/blue "  :yay") " " (p/yellow "[") "nodejs python3 neovim atop" (p/yellow "]") "\n"
+       (p/blue "  :npm") " " (p/yellow "[") "atop react" (p/yellow "]") (p/red "}") "\n\n"))
 
 (def help
   {:as "Show this help page"
@@ -82,14 +83,14 @@
      :category "Managing Packages"
      :arguments? *
      :description "Install packages through any supported package manager"
-     :examples [{:desc (str "Set the default package manager to " (u/blue "yay"))
-                 :ex (str (u/green "shan") " default " (u/blue "yay"))}
-                {:desc (str "Install packages through " (u/blue "yay") ", this config's default package manager")
-                 :ex (str (u/green "shan") " install open-jdk vscode")}
+     :examples [{:desc (str "Set the default package manager to " (p/blue "yay"))
+                 :ex (str (p/green "shan") " default " (p/blue "yay"))}
+                {:desc (str "Install packages through " (p/blue "yay") ", this config's default package manager")
+                 :ex (str (p/green "shan") " install open-jdk vscode")}
                 {:desc "Install packages through a specified package manager"
-                 :ex (str (u/green "shan") " install " (u/blue "--npm") " react-native expo")}
+                 :ex (str (p/green "shan") " install " (p/blue "--npm") " react-native expo")}
                 {:desc "Install packages through various package managers"
-                 :ex (str (u/green "shan") " install open-jdk vscode " (u/blue "--npm") " react-native expo " (u/blue "--pip") " PyYAML")}]
+                 :ex (str (p/green "shan") " install open-jdk vscode " (p/blue "--npm") " react-native expo " (p/blue "--pip") " PyYAML")}]
      :runs install/cli-install
      :opts [check? temporary?]}
     {:command "remove"
@@ -99,13 +100,13 @@
      :description "Uninstall packages through any supported package manager"
      :examples [context
                 {:desc "Removes the packages through yay"
-                 :ex (str (u/green "shan") " remove python nodejs")}
+                 :ex (str (p/green "shan") " remove python nodejs")}
                 {:desc "Removes neovim through yay and react through npm"
-                 :ex (str (u/green "shan") " remove neovim react")}
+                 :ex (str (p/green "shan") " remove neovim react")}
                 {:desc "Removes atop after prompting the user which manager to use."
-                 :ex (str (u/green "shan") " remove atop")}
+                 :ex (str (p/green "shan") " remove atop")}
                 {:desc "Removes emacs after searching to find out what installed it."
-                 :ex (str (u/green "shan") " remove emacs")}]
+                 :ex (str (p/green "shan") " remove emacs")}]
      :runs remove/cli-remove
      :opts [check? temporary?]}
     {:command "add-archive"
@@ -204,14 +205,13 @@
     (catch clojure.lang.ExceptionInfo _
       (run-cmd ["--help"] config)))
 
-  @u/exit-code)
+  (shutdown-agents)
+  @p/exit-code)
 
 (comment
   "Some tests:"
   (-main "install" "htop")
   (-main "install" "htop" "atop")
-  (-main "install" "yay")
-  (-main "install" "yay")
-  (-main "install" "yay")
+  (-main "remove" "htop")
 
   "end test")

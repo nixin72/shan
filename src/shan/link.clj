@@ -5,6 +5,7 @@
   (:require
    [clojure.string :as str]
    [clojure.walk :as walk]
+   [shan.print :as p]
    [shan.util :as u :refer [suppress-stdout]]))
 
 (defn create-path [path paths]
@@ -19,7 +20,7 @@
       (create-path (str (System/getProperty "user.home") (subs path 1)) paths)
 
       (.startsWith path "~")
-      (u/fatal-error "Home directory expansion not implemented for explicit usernames."
+      (p/fatal-error "Home directory expansion not implemented for explicit usernames."
                      "\nPlease use the full path to the directory instead.")
 
       :else
@@ -34,10 +35,10 @@
             (path (first %))
             (path (second %))
             (make-array FileAttribute 0))
-           (println (u/blue "Linking")
+           (p/logln (p/blue "Linking")
                     (.toString (second %)) "to" (.toString (first %)))
            (catch FileAlreadyExistsException _
-             (u/error "Failed to make link to" (str (first %) ":")
+             (p/error "Failed to make link to" (str (first %) ":")
                       "File already exists.")))
         links))
 
@@ -72,7 +73,7 @@
       (cond
         ;; Skip anything matching the .shanignore + .git
         (walk/walk #(.matches % f) #(some true? %) ignore-files)
-        (println (u/yellow "Skipping") (.toString f))
+        (p/logln (p/yellow "Skipping") (.toString f))
 
         ;; Recurse if it's a directory
         (is-dir? f)
@@ -99,4 +100,4 @@
     (suppress-stdout
      (not check)
      (link-structures src dest ignore-files))
-    (println "Done.")))
+    (p/logln "Done.")))

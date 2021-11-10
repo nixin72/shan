@@ -1,17 +1,18 @@
 (ns shan.help
   (:require
    [clojure.string :as str]
+   [shan.print :as p]
    [shan.util :as u]
    [shan.managers :as pm]))
 
 (defn build-name [cmd subcmd desc]
-  (str "\n" (u/bold "DESCRIPTION:") "\n " cmd (if subcmd (str " " subcmd) "") " - " desc "\n"))
+  (str "\n" (p/bold "DESCRIPTION:") "\n " cmd (if subcmd (str " " subcmd) "") " - " desc "\n"))
 
 (defn build-description [desc]
   (str (str/join " " desc) "\n"))
 
 (defn build-usage [cmd long short options? arguments]
-  (str "\n" (u/bold "USAGE:") "\n " cmd " "
+  (str "\n" (p/bold "USAGE:") "\n " cmd " "
        (cond (and long short) (str "[" long "|" short "]")
              long long
              short short) " "
@@ -24,11 +25,11 @@
        "\n"))
 
 (defn build-global-usage [cmd]
-  (str "\n" (u/bold "USAGE:") "\n " cmd
+  (str "\n" (p/bold "USAGE:") "\n " cmd
        " command [global-options] [command-options] [arguments...]\n"))
 
 (defn build-version [version]
-  (str "\n" (u/bold "VERSION:") "\n " version "\n"))
+  (str "\n" (p/bold "VERSION:") "\n " version "\n"))
 
 (defn build-command [cmd]
   (format "\n    %s, %-11s %s" (:short cmd) (:command cmd) (:description cmd)))
@@ -40,12 +41,12 @@
        (reverse)
        (reduce
         (fn [a [k v]]
-          (conj a (str "  " (u/bold (if (nil? k) "Other" k)) ":"
+          (conj a (str "  " (p/bold (if (nil? k) "Other" k)) ":"
                        (apply str (map (fn [x] (build-command x)) v))
                        "\n")))
         [])
        (str/join "\n")
-       (str "\n" (u/bold "COMMANDS:") "\n")))
+       (str "\n" (p/bold "COMMANDS:") "\n")))
 
 (defn build-opt [long short desc]
   (format "   -%s, --%-8s %s\n" short long desc))
@@ -53,20 +54,20 @@
 (defn build-opts [opts]
   (->> (conj opts {:as "Print the help pages" :option "help" :short "h"})
        (map #(build-opt (:option %) (:short %) (:as %)))
-       (apply str "\n" (u/bold "OPTIONS:") "\n")))
+       (apply str "\n" (p/bold "OPTIONS:") "\n")))
 
 (defn build-example [desc ex]
   (format "   $ %s\n     # %s\n" ex desc))
 
 (defn build-examples [examples]
   (let [context (if (string? (first examples)) (first examples) false)]
-    (str "\n" (u/bold "EXAMPLES:") "\n"
+    (str "\n" (p/bold "EXAMPLES:") "\n"
          (or context "")
          (str/join "\n" (map #(build-example (:desc %) (:ex %))
                              (if context (rest examples) examples))))))
 
 (defn build-pms [managers]
-  (str "\n" (u/bold "PACKAGE MANAGERS:") "\n "
+  (str "\n" (p/bold "PACKAGE MANAGERS:") "\n "
        (str/join ", " (sort (map name managers))) "\n"))
 
 (defn global-help [conf]
@@ -79,7 +80,7 @@
                                  :option "version"
                                  :short "v"}))))
   (flush)
-  u/exit-code)
+  p/exit-code)
 
 (defn subcommand-help [setup [cmd subcommand]]
   (let [info (first (filter #(or (= (:command %) subcommand)
@@ -95,4 +96,4 @@
                 (build-opts (:opts info))
                 (if (:examples info) (build-examples (:examples info)) "")))
     (flush)
-    u/exit-code))
+    p/exit-code))

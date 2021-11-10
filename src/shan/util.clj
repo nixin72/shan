@@ -9,49 +9,8 @@
    [clojure.walk :as walk]
    [flatland.ordered.map :as omap :refer [ordered-map]]
    [flatland.ordered.set :as oset :refer [ordered-set]]
+   [shan.print :as p]
    [shan.config :as c]))
-
-(def ^:dynamic *mout* *out*)
-(def exit-code (atom 0))
-(def normal "\033[0m")
-(defn red [string]    (str "\033[0;31m" string normal))
-(defn green [string]  (str "\033[0;32m" string normal))
-(defn yellow [string] (str "\033[0;33m" string normal))
-(defn blue [string]   (str "\033[0;34m" string normal))
-(defn purple [string] (str "\033[0;35m" string normal))
-(defn grey [string]   (str "\033[0;37m" string normal))
-(defn bold [string]   (str "\033[0;1m"  string normal))
-
-(defn identity-prn [arg]
-  (prn arg)
-  arg)
-
-(defn identity-pprint [arg]
-  (pprint arg)
-  arg)
-
-;; ensure that errors get printed, even if verbose is turned off
-(defn log [& arg]
-  (binding [*out* *mout*]
-    (let [time (.format (java.text.SimpleDateFormat. "hh:mm:ss") (java.util.Date.))]
-      (println (-> (str "[" time "]") green bold) (str/join " " arg)))))
-
-(defn warning [& arg]
-  (binding [*out* *mout*]
-    (println (-> "[Warning]" yellow bold)
-             (str/join " " arg))))
-
-(defn error [& arg]
-  (binding [*out* *err*]
-    (reset! exit-code 1)
-    (println (-> "[Error]" red bold)
-             (str/join " " arg))))
-
-(defn fatal-error
-  "Prints an error and quits."
-  [& args]
-  (apply error args)
-  (System/exit @exit-code))
 
 (defn deserialize [ds]
   (walk/prewalk #(cond
@@ -144,14 +103,14 @@
 
 (defn prompt [prompt-string options]
   (try
-    (println (str prompt-string "\n"
-                  (->> options
-                       (map-indexed (fn [k v] (str "- " (name v) " (" k ")")))
-                       (str/join "\n"))))
+    (p/sprintln (str prompt-string "\n"
+                     (->> options
+                          (map-indexed (fn [k v] (str "- " (name v) " (" k ")")))
+                          (str/join "\n"))))
     (or (get options (Integer/parseInt (read-line)))
         (last options))                 ; Get the last if out of range
     (catch java.lang.NumberFormatException _
-      (error "Please enter a number from the selection.")
+      (p/error "Please enter a number from the selection.")
       (prompt prompt-string options))))
 
 (defn yes-or-no
@@ -220,7 +179,7 @@
     (let [old (conj (get-old) new-conf)]
       (write-edn c/gen-file old))
     (catch java.io.FileNotFoundException _
-      (println "Error occured creating a new generation."))))
+      (p/error "Error occured creating a new generation."))))
 
 (defn remove-generation []
   (try
@@ -229,7 +188,7 @@
         (write-edn c/gen-file [{}])
         (write-edn c/gen-file old)))
     (catch java.io.FileNotFoundException _
-      (println "Error occured creating a new generation."))))
+      (p/error "Error occured creating a new generation."))))
 
 (defn write-to-conf [contents] (write-edn c/conf-file contents))
 (defn write-to-temp [contents] (write-edn c/temp-file contents))
@@ -273,27 +232,27 @@
    ;; Install all other packages
    (mapv (fn [p]
            (if (already-installed? installed? p)
-             (or (println (bold p) (blue "is already installed")) p)
+             (or (p/log (p/bold p) "is already installed") p)
              (do
-               (print (str "Installing " (bold p) "... "))
+               (print (str "Installing " (p/bold p) "... "))
                (flush)
                (let [out (install-package install-fn p)]
                  (if out
-                   (do (-> "Successfully installed!" green println) p)
-                   (-> "Failed to install" red println)))))))))
+                   (do (-> "Successfully installed!" p/green p/sprintln) p)
+                   (-> "Failed to install" p/red p/sprintln)))))))))
 
 (defn add-all-archives [archives add-fn]
   (->>
    (into (ordered-set) archives)
    (mapv (fn [a]
-           (-> (str "Adding " a "... ") bold print)
+           (-> (str "Adding " a "... ") p/bold print)
            (flush)
            (when-not (nil? a)
              (let [out (add-archive add-fn (str a))]
-               (println out)
+               (p/sprintln out)
                (if out
-                 (or (-> "Successfully added!" green println) a)
-                 (-> "Failed to add." red println))))))))
+                 (or (-> "Successfully added!" p/green p/sprintln) a)
+                 (-> "Failed to add." p/red println))))))))
 
 (defn remove-all
   "Removes all the packages specified in pkgs using the remove-fn"
@@ -303,14 +262,15 @@
    (into (ordered-set) pkgs)
    ;; Uninstall all other packages
    (mapv (fn [p]
-           (-> (str "Uninstalling " p "... ") bold print)
-           (flush)
            (cond
-             (not (already-installed? installed? p)) (println "it is already uninstalled.")
              (nil? p) false
+             (not (already-installed? installed? p))
+             (p/sprintln (p/bold p) "is already uninstalled.")
              :else
-             (let [out (remove-package remove-fn (str p))]
-               (println out)
-               (if out
-                 (or (-> "Successfully uninstalled!" green println) p)
-                 (-> "Failed to uninstall" red println))))))))
+             (p/loading
+              (-> (str "Uninstalling " p "... ") p/bold)
+              #(let [out (remove-package remove-fn (str p))]
+                 (if out
+                   (do (-> "Successfully uninstalled!" p/green p/sprintln)
+                       p)
+                   (-> "Failed to uninstall" p/red p/sprintln)))))))))

@@ -2,6 +2,7 @@
   (:require
    [clojure.java.shell :as shell]
    [clojure.java.io :as io]
+   [shan.print :as p]
    [shan.util :as u]
    [shan.managers.list :as list]))
 
@@ -18,10 +19,10 @@
     (let [warn "Not having $NODE_PATH set may cause shan to reinstall NPM packages."
           path (cond
                  (nil? node-path)
-                 (u/warning (str "Your NODE_PATH is not set.\n" warn))
+                 (p/warnln (str "Your NODE_PATH is not set.\n" warn))
 
                  (not (.exists (io/file node-path)))
-                 (u/warning (str "Your NODE_PATH does not exist.\n" warn))
+                 (p/warnln (str "Your NODE_PATH does not exist.\n" warn))
 
                  :else node-path)]
       (when-not path

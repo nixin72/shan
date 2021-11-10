@@ -1,6 +1,7 @@
 (ns shan.sync
   (:require
    [clojure.data :as data]
+   [shan.print :as p]
    [shan.util :as u]
    [shan.config :as c]
    [shan.managers :as pm]))
@@ -18,4 +19,4 @@
     (if c/testing?
       [(reduce-kv #(assoc %1 %2 (when %3 (pm/install-pkgs %2 %3 check))) {} add)
        (reduce-kv #(assoc %1 %2 (when %3 (pm/remove-pkgs %2 %3 check))) {} del)]
-      u/exit-code)))
+      p/exit-code)))

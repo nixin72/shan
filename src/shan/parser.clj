@@ -1,6 +1,7 @@
 (ns shan.parser
   (:require
    [clojure.string :as str]
+   [shan.print :as p]
    [shan.util :as u]
    [shan.config :as c]
    [shan.help :as help]
@@ -92,8 +93,8 @@
         (recur head tail result))
 
       (unrecognized-option-or-flag head (:command result) config)
-      (u/fatal-error "Unknown flag" (str (u/bold head) ".")
-                     "Use" (u/bold "shan --help") "to see all options.")
+      (p/fatal-error "Unknown flag" (str (p/bold head) ".")
+                     "use" (p/bold "shan --help") "to see all options.")
 
       :else
       (recur (first tail) (rest tail)
@@ -108,8 +109,9 @@
         (parse-arguments arguments config)]
     (cond
       (nil? (command? command config))
-      (do (u/error "Unknown command" (str (u/bold command) ".")
-                   "Use" (u/bold "shan --help") "to see all options.")
+      (do (p/error "Unknown command"
+                   (p/bold command) "."
+                   "Use" (p/bold "shan --help") "to see all options.")
           (help/global-help config))
 
       (some #{:help} flags)
@@ -121,16 +123,16 @@
       (println c/version)
 
       (nil? command)
-      (do (u/error "No command specified."
-                   "Use" (u/bold "shan --help") "to see all options.")
+      (do (p/error "No command specified."
+                   "Use" (p/bold "shan --help") "to see all options.")
           (help/global-help config))
 
       :else
       (let [run-fn (:runs (subcmd command config))]
         (if (nil? run-fn)
-          (u/error "Internal error: no"
-                   (u/bold ":runs")
-                   "key defined for command" (u/bold command))
+          (p/error "Internal error: no"
+                   (p/bold ":runs")
+                   "key defined for command" (p/bold command))
 
           (run-fn (merge (reduce #(assoc %1 %2 true) {} flags)
                          {:_arguments arguments}

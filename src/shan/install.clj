@@ -1,5 +1,6 @@
 (ns shan.install
   (:require
+   [shan.print :as p]
    [shan.util :as u]
    [shan.managers :as pm]
    [shan.config :as c]))
@@ -47,7 +48,7 @@
         {:keys [success failed commands]} (generate-success-report result)
         success (pm/replace-keys success)]
     (when failed
-      (u/error "\nPackages that failed to install were not added to your config."))
+      (p/error "\nPackages that failed to install were not added to your config."))
 
     (cond
       temp (u/add-to-temp success)
@@ -56,4 +57,4 @@
        (assoc new-conf :default-manager (:default-manager install-map))
        success)
       :else (u/add-to-conf new-conf success))
-    (if c/testing? commands u/exit-code)))
+    (if c/testing? commands p/exit-code)))

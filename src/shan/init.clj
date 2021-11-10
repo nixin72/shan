@@ -1,10 +1,11 @@
 (ns shan.init
   (:require
+   [clojure.string :as str]
+   [shan.print :as p]
    [shan.config :as c]
    [shan.managers :as pm]
    [shan.util :as u]
-   [shan.edit :as edit]
-   [clojure.string :as str]))
+   [shan.edit :as edit]))
 
 (defn write-config [config]
   (u/write-edn c/conf-file config)
@@ -17,14 +18,14 @@
   (reduce (fn [a v]
             (if (contains? (pm/installed-managers) (keyword v))
               (conj a (keyword v))
-              (u/fatal-error "No such package manager" (u/bold v))))
+              (p/fatal-error "No such package manager" (p/bold v))))
           #{} arguments))
 
 (defn include-from-prompt [included manager]
   (cond
     (contains? included :uses) manager
 
-    (u/yes-or-no true "Would you like to include" (-> manager :name name u/bold))
+    (u/yes-or-no true "Would you like to include" (-> manager :name name p/bold))
     (assoc included (:name manager) ((:list manager)))
 
     :else included))
@@ -52,7 +53,7 @@
         {})))
 
 (defn cli-init [{:keys [_arguments]}]
-  (u/warning "Do NOT include versions in your generation. It WILL break things.")
+  (p/warnln "Do NOT include versions in your generation. It WILL break things.")
   (let [pms (get-valid-package-managers _arguments)
         config (include-package-managers pms)
         existing-config? (boolean (seq (u/get-new)))]
@@ -61,4 +62,4 @@
         (write-config config))
       (write-config config))
 
-    (if c/testing? config u/exit-code)))
+    (if c/testing? config p/exit-code)))
