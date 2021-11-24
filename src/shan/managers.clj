@@ -69,6 +69,7 @@
          :installed? "python -m pip show"}
    :gem {:type :language
          :list list/gem
+         :install "gem install"
          :remove "gem uninstall -x"
          :installed? "gem list -lie"}
    :gu {:type :language
