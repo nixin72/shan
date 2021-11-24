@@ -7,6 +7,7 @@
    [shan.managers.list :as list]))
 
 (defn gu? [pkg] (some #{pkg} (list/gu)))
+(defn raco? [pkg] (some #{pkg} (list/raco)))
 
 (def warned? (atom false))
 (def node-path (System/getenv "NODE_PATH"))

@@ -72,6 +72,11 @@
          :install "gem install"
          :remove "gem uninstall -x"
          :installed? "gem list -lie"}
+   :raco {:type :language
+          :list list/raco
+          :remove "raco pkg remove"
+          :install "raco pkg install"
+          :installed? installed/raco?}
    :gu {:type :language
         :list list/gu
         :remove "gu remove"

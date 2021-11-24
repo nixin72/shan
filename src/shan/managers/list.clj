@@ -78,3 +78,12 @@
            str/split-lines
            (drop 2)
            (mapv #(first (str/split % #" ")))))
+
+(defn raco []
+  (some->> (sh/sh "raco" "pkg" "show" "-u")
+           :out
+           str/split-lines
+           (rest)
+           (drop-last 1)
+           (mapv #(first (str/split % #" ")))
+           prn))
