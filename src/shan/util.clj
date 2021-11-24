@@ -61,9 +61,11 @@
 
 (defn flat-map->map [vector-map default-key]
   (->> (reduce (fn [a v]
-                 (let [kw (keyword (subs v 1))]
+                 (let [kw (cond
+                            (str/starts-with? v "--") (keyword (subs v 2))
+                            (str/starts-with? v "-") (keyword (subs v 1)))]
                    (cond
-                     (= v (str kw)) (into a [kw []])
+                     kw (into a [kw []])
                      (= a []) (into a [default-key [v]])
                      :else (conj (pop a) (conj (last a) v)))))
                []
