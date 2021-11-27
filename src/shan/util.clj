@@ -136,9 +136,12 @@
       (.redirectInput inherit))
     (.waitFor (.start process))))
 
+(defn new-function [file-name]
+  (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read deserialize))
+
 (defn read-edn [file-name]
   (try
-    (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read deserialize)
+    (new-function file-name)
     (catch java.io.FileNotFoundException _
       nil)))
 
@@ -269,9 +272,10 @@
              (not (already-installed? installed? p))
              (p/sprintln (p/bold p) "is already uninstalled.")
              :else
+             #_(remove-package remove-fn p)
              (p/loading
               (-> (str "Uninstalling " p "... ") p/bold)
-              #(let [out (remove-package remove-fn (str p))]
+              #(let [out (remove-package remove-fn p)]
                  (if out
                    (do (-> "Successfully uninstalled!" p/green p/sprintln)
                        p)

@@ -2,7 +2,6 @@
   (:require
    [clojure.string :as str]
    [shan.print :as p]
-   [shan.util :as u]
    [shan.config :as c]
    [shan.help :as help]
    [shan.managers :as pm]))

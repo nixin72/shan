@@ -3,7 +3,6 @@
    [clojure.java.shell :as shell]
    [clojure.java.io :as io]
    [shan.print :as p]
-   [shan.util :as u]
    [shan.managers.list :as list]))
 
 (defn gu? [pkg] (some #{pkg} (list/gu)))
@@ -33,3 +32,4 @@
     (do
       (println)
       (shell/sh "npm" "list" "-g" (str pkg)))))
+

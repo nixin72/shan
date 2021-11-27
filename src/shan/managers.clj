@@ -36,17 +36,20 @@
    ;; NOTE: Proper support
    :pacman {:type :system
             :list list/pacman
-            :install "sudo pacman -S --noconfirm"
-            :remove "sudo pacman -R --noconfirm"
+            :sudo? true
+            :install "pacman -S --noconfirm"
+            :remove "pacman -R --noconfirm"
             :installed? "pacman -Q"}
    :paru {:type :system
           :uses :pacman
+          :sudo? true
           :list list/pacman
           :install "paru -S --noconfirm"
           :remove "paru -R --noconfirm"
           :installed? "paru -Q"}
    :yay {:type :system
          :uses :pacman
+         :sudo? true
          :list list/pacman
          :install "yay -S --noconfirm"
          :remove "yay -R --noconfirm"
