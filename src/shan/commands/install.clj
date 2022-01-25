@@ -1,11 +1,12 @@
 (ns shan.install
   (:require
+   [shan.commands.-options :as opts]
    [shan.print :as p]
    [shan.util :as u]
    [shan.managers :as pm]
    [shan.config :as c]))
 
-(defn generate-success-report
+(defn- generate-success-report
   "Used to check which package installations succeeded or failed.
   Returns a map of successful installations, the commands used for those
   installations, and a boolean to indicate if there were failures."
@@ -24,7 +25,7 @@
              {:success {} :commands #{} :failed false}
              result))
 
-(defn find-default-manager
+(defn- find-default-manager
   "Returns a package map"
   [install-map]
   (if-let [pkgs (get install-map nil)]
@@ -36,7 +37,7 @@
              (if set-default? (assoc x :default-manager pm) x)))))
     install-map))
 
-(defn cli-install
+(defn- cli-install
   "Tries to install all packages specified in _arguments using the correct package manager"
   [{:keys [check temp _arguments]}]
   (let [new-conf (u/get-new)
@@ -58,3 +59,20 @@
        success)
       :else (u/add-to-conf new-conf success))
     (if c/testing? commands p/exit-code)))
+
+(def command
+  {:command "install"
+   :short "in"
+   :category "Managing Packages"
+   :arguments? *
+   :description "Install packages through any supported package manager"
+   :examples [{:desc (str "Set the default package manager to " (p/blue "yay"))
+               :ex (str (p/green "shan") " default " (p/blue "yay"))}
+              {:desc (str "Install packages through " (p/blue "yay") ", this config's default package manager")
+               :ex (str (p/green "shan") " install open-jdk vscode")}
+              {:desc "Install packages through a specified package manager"
+               :ex (str (p/green "shan") " install " (p/blue "--npm") " react-native expo")}
+              {:desc "Install packages through various package managers"
+               :ex (str (p/green "shan") " install open-jdk vscode " (p/blue "--npm") " react-native expo " (p/blue "--pip") " PyYAML")}]
+   :runs cli-install
+   :opts [opts/check? opts/temporary?]})
