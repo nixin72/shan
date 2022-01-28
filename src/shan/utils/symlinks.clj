@@ -3,7 +3,7 @@
            [java.nio.file.attribute FileAttribute])
   (:require
    [clojure.walk :as walk]
-   [shan.util.paths :as paths]
+   [shan.utils.paths :as paths]
    [shan.print :as p]))
 
 (defn create-links [links]

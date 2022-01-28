@@ -5,7 +5,7 @@
    [shan.config :as c]
    [shan.managers :as pm]
    [shan.util :as u]
-   [shan.edit :as edit]
+   [shan.commands.edit :as edit]
    [shan.commands.-options :as opts]))
 
 (defn- write-config [config]
@@ -13,7 +13,7 @@
   (when (u/yes-or-no true
                      "Would you like to edit your config"
                      "(Use this opportunity to remove what you don't need)")
-    (edit/cli-edit nil)))
+    ((edit/command :runs) edit/command nil)))
 
 (defn- get-valid-package-managers [arguments]
   (reduce (fn [a v]

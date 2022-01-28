@@ -1,4 +1,4 @@
-(ns shan.help
+(ns shan.commands.help
   (:require
    [clojure.string :as str]
    [shan.print :as p]

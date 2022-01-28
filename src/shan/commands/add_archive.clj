@@ -1,6 +1,7 @@
 (ns shan.commands.add-archive
-  (:require [shan.util :as u]
-            [shan.commands.-options :as opts]))
+  (:require
+   [shan.util :as u]
+   [shan.commands.-options :as opts]))
 
 (defn cli-add-ppa [{:keys [_arguments]}]
   (let [new-conf (u/get-new)

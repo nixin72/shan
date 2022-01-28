@@ -1,4 +1,4 @@
-(ns shan.install
+(ns shan.commands.install
   (:require
    [shan.commands.-options :as opts]
    [shan.print :as p]

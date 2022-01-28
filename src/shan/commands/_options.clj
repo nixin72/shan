@@ -1,4 +1,6 @@
-(ns shan.commands.-options)
+(ns shan.commands.-options
+  (:require
+   [shan.print :as p]))
 
 (def check?
   {:as "Lets package managers take over stdin/stdout"

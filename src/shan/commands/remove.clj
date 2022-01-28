@@ -1,4 +1,4 @@
-(ns shan.remove
+(ns shan.commands.remove
   (:require
    [clojure.java.shell]
    [shan.print :as p]
