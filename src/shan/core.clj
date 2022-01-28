@@ -44,19 +44,19 @@
     purge/command
     merge/command
     list/command
-    init/cli-init]})
+    init/command]})
 
 (defn -main [& args]
   (p/sprintln "START")
   (p/loading "test" #(do
                        (p/sprintln "1")
-                       (Thread/sleep 500)
+                       (Thread/sleep 1500)
                        (p/sprintln "2")
-                       (Thread/sleep 500)
+                       (Thread/sleep 1500)
                        (p/sprintln "3")
-                       (Thread/sleep 500)
+                       (Thread/sleep 1500)
                        (p/sprintln "4")
-                       (Thread/sleep 500)
+                       (Thread/sleep 1500)
                        (p/sprintln "5")))
   (p/sprintln "DONE")
   #_(if (= "root" (System/getProperty "user.name"))

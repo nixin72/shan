@@ -38,27 +38,21 @@
 (def allow-printing (atom true))
 (def print-queue (atom clojure.lang.PersistentQueue/EMPTY))
 
-(defn sprint [& args]
-  (let [print-string (str/join " " args)]
-    (if @allow-printing
-      (do
-        (print print-string)
-        (flush))
-      (swap! print-queue conj print-string))))
-
-(defn sprintln [& args]
-  (let [print-string (str (str/join " " args))]
-    (if @allow-printing
-      (println print-string)
-      (do
-        (println print-string)
-        (swap! print-queue conj print-string)))))
-
 (defn flush-print-queue []
-  (when-not (empty? @print-queue)
+  (when (and (seq @print-queue) @allow-printing)
     (print (peek @print-queue))
     (flush)
     (swap! print-queue pop)
+    (flush-print-queue)))
+
+(defn sprint [& args]
+  (let [print-string (str/join " " args)]
+    (swap! print-queue conj print-string)
+    (flush-print-queue)))
+
+(defn sprintln [& args]
+  (let [print-string (str (str/join " " args) "\n")]
+    (swap! print-queue conj print-string)
     (flush-print-queue)))
 
 (defn log-time [status]
@@ -93,30 +87,43 @@
         lines (-> (sh/sh "tput" "lines") :out str/trim-newline Integer/parseInt)
         kill (future (task))]
     (newline)
-    (with-excursion
-      (reserve-bottom-line lines))
-    (move-up-line)
+    (print "\0337")                     ; save cursor position
+    (print "\033[0;" (dec lines) "r")   ; reserve bottom line
+    (print "\0338")                     ; restore cursor position
+    (print "\033[1A")                   ; move up one line
+    #_(with-excursion
+        (reserve-bottom-line lines))
+    #_(move-up-line)
     (loop [sym sym]
-      (if (future-done? kill)
+      (if-not (future-done? kill)
+        (do
+          (Thread/sleep 500)
+          (flush-print-queue)
+                                        ;print
+          ;; (print "HERE")
+          (reset! allow-printing false) ;
+          (print "\0337")               ; save cursor position
+          (print "\033[" lines ";0f")   ; move cursor to bottom
+          (print (str start-msg " " (first sym)))
+          (print "\0338")               ; restore cursor position
+          (reset! allow-printing true)
+          (newline)
+          #_(with-excursion
+              (move-to-bottom lines)
+              (print (str start-msg " " (first sym)))
+              (flush))
+          #_(newline)
+          #_(println @print-queue)
+          #_(flush-print-queue)
+          (recur (rest sym)))
+        ;; Done
         (let [ret @kill]
           (with-excursion
             (free-bottom-line lines)
             (move-to-bottom lines)
             (clear-line))
           (newline)
-          ;; NOTE: returns from here lmao
-          ret)
-        (do
-          (Thread/sleep 100)
-          (flush-print-queue)
-          (with-excursion
-            (move-to-bottom lines)
-            (print (str start-msg " " (first sym)))
-            (flush))
-          (newline)
-          #_(println @print-queue)
-          #_(flush-print-queue)
-          (recur (rest sym)))))))
+          ret)))))
 
 (defn error [& args]
   (reset! exit-code 1)
