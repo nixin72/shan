@@ -47,30 +47,20 @@
     init/command]})
 
 (defn -main [& args]
-  (p/sprintln "START")
-  (p/loading "test" #(do
-                       (p/sprintln "1")
-                       (Thread/sleep 1500)
-                       (p/sprintln "2")
-                       (Thread/sleep 1500)
-                       (p/sprintln "3")
-                       (Thread/sleep 1500)
-                       (p/sprintln "4")
-                       (Thread/sleep 1500)
-                       (p/sprintln "5")))
-  (p/sprintln "DONE")
-  #_(if (= "root" (System/getProperty "user.name"))
-      (p/fatal-error "Do not run as root.")
-      (try
-        (case (first args)
+  (if (= "root" (System/getProperty "user.name"))
+    (p/fatal-error "Do not run as root.")
+    (try
+      (case (first args)
         ;; If it looks like the user is trying to get help, help them
-          ("h" "help" "-h" "--help") (run-cmd ["--help"] config)
-          nil
-          (run-cmd ["--help"] config)
+        ("h" "help" "-h" "--help")
+        (run-cmd ["--help"] config)
+        ;; Also help them if they provide no arguments
+        nil
+        (run-cmd ["--help"] config)
         ;; Otherwise, just do what they want
-          (run-cmd args config))
-        (catch clojure.lang.ExceptionInfo _
-          (run-cmd ["--help"] config))))
+        (run-cmd args config))
+      (catch clojure.lang.ExceptionInfo _
+        (run-cmd ["--help"] config))))
 
   (shutdown-agents)
   @p/exit-code)

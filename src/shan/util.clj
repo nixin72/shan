@@ -118,7 +118,7 @@
 (defn yes-or-no
   "Basic yes or no prompt."
   [default & prompt]
-  (print (str (str/join " " prompt) "? " (if default "Y/n" "N/y")) " ")
+  (p/sprint (str (str/join " " prompt) "? " (if default "Y/n" "N/y")) " ")
   (flush)
   (let [input (read-line)]
     (if (= input "")
@@ -239,7 +239,7 @@
            (if (already-installed? installed? p)
              (or (p/log (p/bold p) "is already installed") p)
              (do
-               (print (str "Installing " (p/bold p) "... "))
+               (p/sprint (str "Installing " (p/bold p) "... "))
                (flush)
                (let [out (install-package install-fn p)]
                  (if out

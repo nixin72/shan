@@ -1,8 +1,9 @@
 (ns shan.print
+  (:import [org.jline.terminal TerminalBuilder]
+           [org.jline.utils Status AttributedString])
   (:require
    [clojure.pprint :refer [pprint]]
-   [clojure.string :as str]
-   [clojure.java.shell :as sh]))
+   [clojure.string :as str]))
 
 (defn identity-prn [arg]
   (prn arg)
@@ -25,25 +26,20 @@
 (defn grey [& string]   (color "\033[0;37m" string))
 (defn bold [& string]   (color "\033[0;1m"  string))
 
-(defn save-cursor-position [] (print "\0337"))
-(defn reserve-bottom-line [lines] (print (str "\033[0;" (dec lines) "r")))
-(defn restore-cursor-position [] (print "\0338"))
-(defn move-up-line [] (print "\033[1A"))
-(defn move-to-bottom [lines] (print (str "\033[" lines ";0f")))
-(defn free-bottom-line [lines] (print (str "\033[0;" lines "r")))
-(defn clear-line [] (print "\033[0K"))
-
 (def ^:dynamic *mout* *out*)
 (def exit-code (atom 0))
 (def allow-printing (atom true))
 (def print-queue (atom clojure.lang.PersistentQueue/EMPTY))
 
-(defn flush-print-queue []
-  (when (and (seq @print-queue) @allow-printing)
-    (print (peek @print-queue))
-    (flush)
-    (swap! print-queue pop)
-    (flush-print-queue)))
+(defn flush-print-queue
+  ([] (flush-print-queue *out*))
+  ([output-stream]
+   (when (and (seq @print-queue) @allow-printing)
+     (with-redefs [*out* output-stream]
+       (print (peek @print-queue))
+       (flush)
+       (swap! print-queue pop)
+       (flush-print-queue)))))
 
 (defn sprint [& args]
   (let [print-string (str/join " " args)]
@@ -74,56 +70,30 @@
                  (if newline? "\n" "")))
      (flush))))
 
-(defmacro with-excursion [& body]
-  `(do
-     (reset! allow-printing false)
-     (save-cursor-position)
-     ~@body
-     (restore-cursor-position)
-     (reset! allow-printing true)))
-
 (defn loading [start-msg task]
   (let [sym (cycle "|/-\\")
-        lines (-> (sh/sh "tput" "lines") :out str/trim-newline Integer/parseInt)
+        term (TerminalBuilder/terminal)
+        status (or (Status/getStatus term false)
+                   (Status/getStatus term))
         kill (future (task))]
-    (newline)
-    (print "\0337")                     ; save cursor position
-    (print "\033[0;" (dec lines) "r")   ; reserve bottom line
-    (print "\0338")                     ; restore cursor position
-    (print "\033[1A")                   ; move up one line
-    #_(with-excursion
-        (reserve-bottom-line lines))
-    #_(move-up-line)
+    (.setBorder status true)
+    (Thread/sleep 100)
     (loop [sym sym]
       (if-not (future-done? kill)
         (do
-          (Thread/sleep 500)
-          (flush-print-queue)
-                                        ;print
-          ;; (print "HERE")
-          (reset! allow-printing false) ;
-          (print "\0337")               ; save cursor position
-          (print "\033[" lines ";0f")   ; move cursor to bottom
-          (print (str start-msg " " (first sym)))
-          (print "\0338")               ; restore cursor position
-          (reset! allow-printing true)
-          (newline)
-          #_(with-excursion
-              (move-to-bottom lines)
-              (print (str start-msg " " (first sym)))
-              (flush))
-          #_(newline)
-          #_(println @print-queue)
-          #_(flush-print-queue)
+          ;; HACK
+          ;; This is an absolute hack!
+          ;; Removing the println screws up the way the output is formatted. Printing a newline is
+          ;; required for some reason, so my solution is to println the escape code that moves the
+          ;; cursor up a line, so that it effectively moves up to the previous line, then prints a
+          ;; newline. It *should* have no effect, and yet...
+          ;; (println)
+          ;; (print "\033[1A")
+          (Thread/sleep 100)
+          (doto status
+            (.update [(AttributedString/fromAnsi (str start-msg " " (first sym)))]))
           (recur (rest sym)))
-        ;; Done
-        (let [ret @kill]
-          (with-excursion
-            (free-bottom-line lines)
-            (move-to-bottom lines)
-            (clear-line))
-          (newline)
-          ret)))))
+        @kill))))
 
 (defn error [& args]
   (reset! exit-code 1)
@@ -137,8 +107,8 @@
   (apply errorln args)
   (System/exit @exit-code))
 
-(defn log [& args] (force-print *out* :success args))
-(defn logln [& args] (force-print *out* :success args true))
+(defn log [& args] (force-print *mout* :success args))
+(defn logln [& args] (force-print *mout* :success args true))
 
-(defn warn [& args] (force-print *out* :warning args))
-(defn warnln [& args] (force-print *out* :warning args true))
+(defn warn [& args] (force-print *mout* :warning args))
+(defn warnln [& args] (force-print *mout* :warning args true))

@@ -3,10 +3,10 @@
    [clojure.string :as str]
    [clojure.java.shell :as shell]
    [shan.print :as p]
-   [shan.managers.installed :as installed]
-   [shan.managers.list :as list]
    [shan.config :as c]
-   [shan.util :as u]))
+   [shan.util :as u]
+   [shan.managers.installed :as installed]
+   [shan.managers.list :as list]))
 
 (def ^:dynamic package-managers
   ;; TODO: Support MacOS and Windows better
@@ -36,20 +36,17 @@
    ;; NOTE: Proper support
    :pacman {:type :system
             :list list/pacman
-            :sudo? true
-            :install "pacman -S --noconfirm"
-            :remove "pacman -R --noconfirm"
+            :install "sudo pacman -S --noconfirm"
+            :remove "sudo pacman -R --noconfirm"
             :installed? "pacman -Q"}
    :paru {:type :system
           :uses :pacman
-          :sudo? true
           :list list/pacman
           :install "paru -S --noconfirm"
           :remove "paru -R --noconfirm"
           :installed? "paru -Q"}
    :yay {:type :system
          :uses :pacman
-         :sudo? true
          :list list/pacman
          :install "yay -S --noconfirm"
          :remove "yay -R --noconfirm"
@@ -194,7 +191,6 @@
 
 (defn remove-pkgs [manager pkgs verbose?]
   (with-package-manager [pm manager]
-
     (p/logln "Uninstalling" (p/bold (name manager)) "packages:")
     (let [{:keys [remove installed?]} pm
           out (u/remove-all

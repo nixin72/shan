@@ -40,6 +40,7 @@
 (defn- cli-install
   "Tries to install all packages specified in _arguments using the correct package manager"
   [{:keys [check temp _arguments]}]
+  (p/sprintln "start")
   (let [new-conf (u/get-new)
         install-map (u/flat-map->map _arguments (:default-manager new-conf))
         install-map (find-default-manager install-map)
@@ -48,6 +49,8 @@
                           (dissoc install-map :default-manager))
         {:keys [success failed commands]} (generate-success-report result)
         success (pm/replace-keys success)]
+    (p/sprintln install-map)
+
     (when failed
       (p/error "\nPackages that failed to install were not added to your config."))
 
