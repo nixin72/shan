@@ -230,21 +230,20 @@
   "Installs all the packages specified in pkgs using the install-fn"
   [pkgs install-fn installed?]
   (->>
-   ;; Put it into a set first to avoid doing the same thing multiple times
+      ;; Put it into a set first to avoid doing the same thing multiple times
    (into (ordered-set) pkgs)
-   ;; Filter out any accidental nils
-   (filter #(not (nil? %)))
-   ;; Install all other packages
+      ;; Filter out any accidental nils
+   (filter (fn [x] (not (nil? x))))
+      ;; Install all other packages
    (mapv (fn [p]
            (if (already-installed? installed? p)
-             (or (p/log (p/bold p) "is already installed") p)
-             (do
-               (p/sprint (str "Installing " (p/bold p) "... "))
-               (flush)
-               (let [out (install-package install-fn p)]
-                 (if out
-                   (do (-> "Successfully installed!" p/green p/sprintln) p)
-                   (-> "Failed to install" p/red p/sprintln)))))))))
+             (or (p/logln (p/bold p) "is already installed") p)
+             (let [out (p/loading
+                        (str "Installing " (p/bold p) "...")
+                        #(install-package install-fn p))]
+               (if out
+                 (do (-> "Successfully installed!" p/green p/sprintln) p)
+                 (-> "Failed to install" p/red p/sprintln))))))))
 
 (defn add-all-archives [archives add-fn]
   (->>
@@ -263,20 +262,19 @@
   "Removes all the packages specified in pkgs using the remove-fn"
   [pkgs remove-fn installed?]
   (->>
-   ;; Avoid doing the same thing twice
+      ;; Avoid doing the same thing twice
    (into (ordered-set) pkgs)
-   ;; Uninstall all other packages
+      ;; Uninstall all other packages
    (mapv (fn [p]
            (cond
              (nil? p) false
              (not (already-installed? installed? p))
              (p/sprintln (p/bold p) "is already uninstalled.")
              :else
-             #_(remove-package remove-fn p)
-             (p/loading
-              (-> (str "Uninstalling " p "... ") p/bold)
-              #(let [out (remove-package remove-fn p)]
-                 (if out
-                   (do (-> "Successfully uninstalled!" p/green p/sprintln)
-                       p)
-                   (-> "Failed to uninstall" p/red p/sprintln)))))))))
+             (let [out (p/loading
+                        (str "Uninstalling " (p/bold p) "...")
+                        #(remove-package remove-fn p))]
+               (if out
+                 (do (-> "Successfully uninstalled!" p/green p/sprintln)
+                     p)
+                 (-> "Failed to uninstall" p/red p/sprintln))))))))

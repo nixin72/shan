@@ -1,6 +1,4 @@
 (ns shan.print
-  (:import [org.jline.terminal TerminalBuilder]
-           [org.jline.utils Status AttributedString])
   (:require
    [clojure.pprint :refer [pprint]]
    [clojure.string :as str]))
@@ -72,28 +70,17 @@
 
 (defn loading [start-msg task]
   (let [sym (cycle "|/-\\")
-        term (TerminalBuilder/terminal)
-        status (or (Status/getStatus term false)
-                   (Status/getStatus term))
         kill (future (task))]
-    (.setBorder status true)
-    (Thread/sleep 100)
     (loop [sym sym]
-      (if-not (future-done? kill)
-        (do
-          ;; HACK
-          ;; This is an absolute hack!
-          ;; Removing the println screws up the way the output is formatted. Printing a newline is
-          ;; required for some reason, so my solution is to println the escape code that moves the
-          ;; cursor up a line, so that it effectively moves up to the previous line, then prints a
-          ;; newline. It *should* have no effect, and yet...
-          ;; (println)
-          ;; (print "\033[1A")
-          (Thread/sleep 100)
-          (doto status
-            (.update [(AttributedString/fromAnsi (str start-msg " " (first sym)))]))
-          (recur (rest sym)))
-        @kill))))
+      (when-not (future-done? kill)
+        (Thread/sleep 100)
+        (println "\033[1A")
+        (print (str start-msg " " (first sym)))
+        (flush)
+        (recur (rest sym))))
+    (print "\b")
+    (flush)
+    @kill))
 
 (defn error [& args]
   (reset! exit-code 1)
