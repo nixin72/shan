@@ -3,6 +3,7 @@
    [shan.parser :refer [run-cmd]]
    [shan.print :as p]
    [shan.config :as c]
+   [shan.cache :as cache]
    [shan.commands.-options :as opts]
    [shan.commands.add-archive :as add-archive]
    [shan.commands.default :as default]
@@ -50,6 +51,7 @@
   (if (= "root" (System/getProperty "user.name"))
     (p/fatal-error "Do not run as root.")
     (try
+      (future (cache/read-cache))
       (case (first args)
         ;; If it looks like the user is trying to get help, help them
         ("h" "help" "-h" "--help")
