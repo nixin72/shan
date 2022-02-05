@@ -17,24 +17,34 @@
 (def ^:dynamic testing? false)
 (def ^:dynamic home (str (System/getenv "HOME") "/"))
 (def local ".local/share/")
+(def cache ".cache/")
 (def appdata "AppData/Local/")
 
 (def OS (System/getProperty "os.name"))
 (def unix? (some #{OS} #{"Linux" "Mac OS X"}))
 (def windows? (not unix?))
 
-(def ^:dynamic data-dir
-  (let [dir (str home (case OS
-                        ("Linux" "Mac OS X") local
-                        appdata)
-                 "shan/")]
+(defn build-path [& path-elements]
+  (let [dir (->> path-elements
+                 (mapv #(cond (string? %) %
+                              (map? %) (case OS
+                                         ("Linux" "Mac OS X") (:unix %)
+                                         (:win %))))
+                 (apply str))]
     (when-not (file-exists? dir)
       (-> dir java.io.File. .mkdir))
     dir))
 
+(def ^:dynamic data-dir
+  (build-path home {:unix local :win appdata} "shan/"))
+
+(def ^:dynamic cache-dir
+  (build-path home {:unix cache :win appdata} "shan/"))
+
 (def ^:dynamic conf-file (str data-dir "shan.edn"))
 (def ^:dynamic temp-file (str data-dir "temporary.edn"))
 (def ^:dynamic gen-file (str data-dir "generations.edn"))
+(def ^:dynamic cache-file (str cache-dir "cache.edn"))
 
 (when-not (file-exists? temp-file)
   (create-file temp-file))

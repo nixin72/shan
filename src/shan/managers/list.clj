@@ -8,8 +8,10 @@
 
 (def preserve-prompt "Would you like to preserve version numbers for")
 
-(defn brew []
-  (let [preserve-versions? (u/yes-or-no false preserve-prompt (p/bold "brew"))
+(defn brew [& {:keys [versions?]}]
+  (let [preserve-versions? (if (nil? versions?)
+                             (u/yes-or-no false preserve-prompt (p/bold "brew"))
+                             versions?)
         packages (->> (sh/sh "brew" "list" "--versions")
                       :out
                       str/split-lines
@@ -17,11 +19,13 @@
                       (map #(hash-map (symbol (first %)) (last %))))]
     (if preserve-versions? packages (into [] (keys packages)))))
 
-(defn pacman []
+(defn pacman [& _]
   (->> (sh/sh "pacman" "-Qqett") :out str/split-lines (into [])))
 
-(defn npm []
-  (let [preserve-versions? (u/yes-or-no false preserve-prompt (p/bold "npm"))
+(defn npm [& {:keys [versions?]}]
+  (let [preserve-versions? (if (nil? versions?)
+                             (u/yes-or-no false preserve-prompt (p/bold "npm"))
+                             versions?)
         packages
         (some->>
          (sh/sh "npm" "list" "-g" "--depth" "0" "--json" "true")
@@ -51,8 +55,10 @@
 
     (if preserve-versions? packages (into [] (keys packages)))))
 
-(defn pip []
-  (let [preserve-versions? (u/yes-or-no false preserve-prompt (p/bold "pip"))
+(defn pip [& {:keys [versions?]}]
+  (let [preserve-versions? (if (nil? versions?)
+                             (u/yes-or-no false preserve-prompt (p/bold "pip"))
+                             versions?)
         packages
         (->> (sh/sh "python" "-m" "pip" "list" "--user" "--exclude" "pip" "--format" "json")
              :out
@@ -61,8 +67,10 @@
              (apply merge))]
     (if preserve-versions? packages (into [] (keys packages)))))
 
-(defn gem []
-  (let [preserve-versions? (u/yes-or-no false preserve-prompt (p/bold "gem"))
+(defn gem [& {:keys [versions?]}]
+  (let [preserve-versions? (if (nil? versions?)
+                             (u/yes-or-no false preserve-prompt (p/bold "gem"))
+                             versions?)
         packages
         (some->> (sh/sh "gem" "list" "--local")
                  :out
@@ -72,14 +80,14 @@
                  (apply merge))]
     (if preserve-versions? packages (into [] (keys packages)))))
 
-(defn gu []
+(defn gu [& _]
   (some->> (sh/sh "gu" "list")
            :out
            str/split-lines
            (drop 2)
            (mapv #(first (str/split % #" ")))))
 
-(defn raco []
+(defn raco [& _]
   (some->> (sh/sh "raco" "pkg" "show" "-u")
            :out
            str/split-lines
