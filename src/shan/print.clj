@@ -26,28 +26,6 @@
 
 (def ^:dynamic *mout* *out*)
 (def exit-code (atom 0))
-(def allow-printing (atom true))
-(def print-queue (atom clojure.lang.PersistentQueue/EMPTY))
-
-(defn flush-print-queue
-  ([] (flush-print-queue *out*))
-  ([output-stream]
-   (when (and (seq @print-queue) @allow-printing)
-     (with-redefs [*out* output-stream]
-       (print (peek @print-queue))
-       (flush)
-       (swap! print-queue pop)
-       (flush-print-queue)))))
-
-(defn sprint [& args]
-  (let [print-string (str/join " " args)]
-    (swap! print-queue conj print-string)
-    (flush-print-queue)))
-
-(defn sprintln [& args]
-  (let [print-string (str (str/join " " args) "\n")]
-    (swap! print-queue conj print-string)
-    (flush-print-queue)))
 
 (defn log-time [status]
   (let [time (.format (java.text.SimpleDateFormat. "hh:mm:ss") (java.util.Date.))]

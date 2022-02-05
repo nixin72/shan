@@ -105,10 +105,10 @@
 
 (defn prompt [prompt-string options]
   (try
-    (p/sprintln (str prompt-string "\n"
-                     (->> options
-                          (map-indexed (fn [k v] (str "- " (name v) " (" k ")")))
-                          (str/join "\n"))))
+    (println (str prompt-string "\n"
+                  (->> options
+                       (map-indexed (fn [k v] (str "- " (name v) " (" k ")")))
+                       (str/join "\n"))))
     (or (get options (Integer/parseInt (read-line)))
         (last options))                 ; Get the last if out of range
     (catch java.lang.NumberFormatException _
@@ -118,7 +118,7 @@
 (defn yes-or-no
   "Basic yes or no prompt."
   [default & prompt]
-  (p/sprint (str (str/join " " prompt) "? " (if default "Y/n" "N/y")) " ")
+  (print (str (str/join " " prompt) "? " (if default "Y/n" "N/y")) " ")
   (flush)
   (let [input (read-line)]
     (if (= input "")
@@ -242,8 +242,8 @@
                         (str "Installing " (p/bold p) "...")
                         #(install-package install-fn p))]
                (if out
-                 (do (-> "Successfully installed!" p/green p/sprintln) p)
-                 (-> "Failed to install" p/red p/sprintln))))))))
+                 (do (-> "Successfully installed!" p/green println) p)
+                 (-> "Failed to install" p/red println))))))))
 
 (defn add-all-archives [archives add-fn]
   (->>
@@ -253,9 +253,9 @@
            (flush)
            (when-not (nil? a)
              (let [out (add-archive add-fn (str a))]
-               (p/sprintln out)
+               (println out)
                (if out
-                 (or (-> "Successfully added!" p/green p/sprintln) a)
+                 (or (-> "Successfully added!" p/green println) a)
                  (-> "Failed to add." p/red println))))))))
 
 (defn remove-all
@@ -269,12 +269,12 @@
            (cond
              (nil? p) false
              (not (already-installed? installed? p))
-             (p/sprintln (p/bold p) "is already uninstalled.")
+             (println (p/bold p) "is already uninstalled.")
              :else
              (let [out (p/loading
                         (str "Uninstalling " (p/bold p) "...")
                         #(remove-package remove-fn p))]
                (if out
-                 (do (-> "Successfully uninstalled!" p/green p/sprintln)
+                 (do (-> "Successfully uninstalled!" p/green println)
                      p)
-                 (-> "Failed to uninstall" p/red p/sprintln))))))))
+                 (-> "Failed to uninstall" p/red println))))))))
