@@ -2,9 +2,8 @@
   (:require
    [clojure.string :as str]
    [shan.print :as p]
-   [shan.util :as u]
    [shan.config :as c]
-   [shan.help :as help]
+   [shan.commands.help :as help]
    [shan.managers :as pm]))
 
 (defn subcmd [command config]

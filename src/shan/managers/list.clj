@@ -85,5 +85,4 @@
            str/split-lines
            (rest)
            (drop-last 1)
-           (mapv #(first (str/split % #" ")))
-           prn))
+           (mapv #(first (str/split % #" ")))))

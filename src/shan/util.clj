@@ -105,10 +105,10 @@
 
 (defn prompt [prompt-string options]
   (try
-    (p/sprintln (str prompt-string "\n"
-                     (->> options
-                          (map-indexed (fn [k v] (str "- " (name v) " (" k ")")))
-                          (str/join "\n"))))
+    (println (str prompt-string "\n"
+                  (->> options
+                       (map-indexed (fn [k v] (str "- " (name v) " (" k ")")))
+                       (str/join "\n"))))
     (or (get options (Integer/parseInt (read-line)))
         (last options))                 ; Get the last if out of range
     (catch java.lang.NumberFormatException _
@@ -136,9 +136,12 @@
       (.redirectInput inherit))
     (.waitFor (.start process))))
 
+(defn new-function [file-name]
+  (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read deserialize))
+
 (defn read-edn [file-name]
   (try
-    (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read deserialize)
+    (new-function file-name)
     (catch java.io.FileNotFoundException _
       nil)))
 
@@ -227,21 +230,20 @@
   "Installs all the packages specified in pkgs using the install-fn"
   [pkgs install-fn installed?]
   (->>
-   ;; Put it into a set first to avoid doing the same thing multiple times
+      ;; Put it into a set first to avoid doing the same thing multiple times
    (into (ordered-set) pkgs)
-   ;; Filter out any accidental nils
-   (filter #(not (nil? %)))
-   ;; Install all other packages
+      ;; Filter out any accidental nils
+   (filter (fn [x] (not (nil? x))))
+      ;; Install all other packages
    (mapv (fn [p]
            (if (already-installed? installed? p)
-             (or (p/log (p/bold p) "is already installed") p)
-             (do
-               (print (str "Installing " (p/bold p) "... "))
-               (flush)
-               (let [out (install-package install-fn p)]
-                 (if out
-                   (do (-> "Successfully installed!" p/green p/sprintln) p)
-                   (-> "Failed to install" p/red p/sprintln)))))))))
+             (or (p/logln (p/bold p) "is already installed") p)
+             (let [out (p/loading
+                        (str "Installing " (p/bold p) "...")
+                        #(install-package install-fn p))]
+               (if out
+                 (do (-> "Successfully installed!" p/green println) p)
+                 (-> "Failed to install" p/red println))))))))
 
 (defn add-all-archives [archives add-fn]
   (->>
@@ -251,28 +253,28 @@
            (flush)
            (when-not (nil? a)
              (let [out (add-archive add-fn (str a))]
-               (p/sprintln out)
+               (println out)
                (if out
-                 (or (-> "Successfully added!" p/green p/sprintln) a)
+                 (or (-> "Successfully added!" p/green println) a)
                  (-> "Failed to add." p/red println))))))))
 
 (defn remove-all
   "Removes all the packages specified in pkgs using the remove-fn"
   [pkgs remove-fn installed?]
   (->>
-   ;; Avoid doing the same thing twice
+      ;; Avoid doing the same thing twice
    (into (ordered-set) pkgs)
-   ;; Uninstall all other packages
+      ;; Uninstall all other packages
    (mapv (fn [p]
            (cond
              (nil? p) false
              (not (already-installed? installed? p))
-             (p/sprintln (p/bold p) "is already uninstalled.")
+             (println (p/bold p) "is already uninstalled.")
              :else
-             (p/loading
-              (-> (str "Uninstalling " p "... ") p/bold)
-              #(let [out (remove-package remove-fn (str p))]
-                 (if out
-                   (do (-> "Successfully uninstalled!" p/green p/sprintln)
-                       p)
-                   (-> "Failed to uninstall" p/red p/sprintln)))))))))
+             (let [out (p/loading
+                        (str "Uninstalling " (p/bold p) "...")
+                        #(remove-package remove-fn p))]
+               (if out
+                 (do (-> "Successfully uninstalled!" p/green println)
+                     p)
+                 (-> "Failed to uninstall" p/red println))))))))

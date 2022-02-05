@@ -3,10 +3,12 @@
    [clojure.string :as str]
    [clojure.java.shell :as shell]
    [shan.print :as p]
-   [shan.managers.installed :as installed]
-   [shan.managers.list :as list]
    [shan.config :as c]
-   [shan.util :as u]))
+   [shan.util :as u]
+   [shan.managers.installed :as installed]
+   [shan.managers.list :as list]))
+
+(def password (atom nil))
 
 (def ^:dynamic package-managers
   ;; TODO: Support MacOS and Windows better
@@ -36,20 +38,23 @@
    ;; NOTE: Proper support
    :pacman {:type :system
             :list list/pacman
-            :install "sudo pacman -S --noconfirm"
-            :remove "sudo pacman -R --noconfirm"
+            :sudo? true
+            :install "sudo -S -- pacman -S --noconfirm"
+            :remove "sudo -S -- pacman -R --noconfirm"
             :installed? "pacman -Q"}
    :paru {:type :system
           :uses :pacman
           :list list/pacman
-          :install "paru -S --noconfirm"
-          :remove "paru -R --noconfirm"
+          :sudo? true
+          :install "paru --sudoflags -S -S --noconfirm"
+          :remove "paru --sudoflags -S -R --noconfirm"
           :installed? "paru -Q"}
    :yay {:type :system
          :uses :pacman
+         :sudo? true
          :list list/pacman
-         :install "yay -S --noconfirm"
-         :remove "yay -R --noconfirm"
+         :install "yay --sudoflags -S -S --noconfirm"
+         :remove "yay --sudoflags -S -R --noconfirm"
          :installed? "yay -Q"}
    :npm {:type :language
          :list list/npm
@@ -138,11 +143,11 @@
 
 (defn make-fn
   "Generate a function that executes a shell command."
-  [command verbose?]
+  [command verbose? & {:keys [sudo?]}]
   (cond
     (fn? command) command
-    (string? command) (make-fn (str/split command #" ") verbose?)
-    (vector? command) #(let [cmd (conj command (str %))
+    (string? command) (make-fn (str/split command #" ") verbose? :sudo? sudo?)
+    (vector? command) #(let [cmd (into command [(str %) :in (when sudo? @password)])
                              out (if verbose?
                                    (apply u/sh-verbose cmd)
                                    (apply shell/sh cmd))]
@@ -169,35 +174,49 @@
          (unknown-package-manager ~package-manager))
        (do ~@body))))
 
+(defmacro with-sudo [pm & body]
+  `(do (when (and (:sudo? ~pm) (nil? @password))
+         (let [pass# (.readPassword (System/console) "Enter password: " nil)]
+           (reset! password pass#)))
+       ~@body))
+
 (defn install-pkgs [manager pkgs verbose?]
   (with-package-manager [pm manager]
     (when (contains? pm :pre-install)
       (apply (make-fn (:pre-install pm) verbose?) []))
 
-    (p/logln "Installing" (p/bold (name manager)) "packages:")
-    (let [{:keys [install installed?]} pm
-          out (u/install-all
-               pkgs (make-fn install verbose?) (make-fn installed? false))]
-      (newline)
-      (zipmap (map #(str install " " %) pkgs) out))))
+    (with-sudo pm
+      (p/logln "Installing" (p/bold (name manager)) "packages:")
+      (let [{:keys [install installed?]} pm
+            out (u/install-all
+                 pkgs
+                 (make-fn install verbose? :sudo? (:sudo? pm))
+                 (make-fn installed? false :sudo? (:sudo? pm)))]
+        (newline)
+        (zipmap (map #(str install " " %) pkgs) out)))))
 
 (defn add-archives [manager ppas verbose?]
   (with-package-manager [pm manager]
     (p/logln "Adding package archives for:" (p/bold (name manager)))
     (let [{:keys [add-ppas]} pm
-          out (u/add-all-archives ppas (make-fn add-ppas verbose?))]
+          out (u/add-all-archives
+               ppas
+               (make-fn add-ppas verbose?))]
       (newline)
       (zipmap (map #(str add-ppas " " %) ppas) out))))
 
 (defn remove-pkgs [manager pkgs verbose?]
   (with-package-manager [pm manager]
 
-    (p/logln "Uninstalling" (p/bold (name manager)) "packages:")
-    (let [{:keys [remove installed?]} pm
-          out (u/remove-all
-               pkgs (make-fn remove verbose?) (make-fn installed? false))]
-      (newline)
-      (zipmap (map #(str remove " " %) pkgs) out))))
+    (with-sudo pm
+      (p/logln "Uninstalling" (p/bold (name manager)) "packages:")
+      (let [{:keys [remove installed?]} pm
+            out (u/remove-all
+                 pkgs
+                 (make-fn remove verbose? :sudo? (:sudo? pm))
+                 (make-fn installed? false :sudo? (:sudo? pm)))]
+        (newline)
+        (zipmap (map #(str remove " " %) pkgs) out)))))
 
 (defn replace-keys
   "Replaces package managers when one is using another"

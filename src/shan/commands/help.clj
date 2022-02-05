@@ -1,8 +1,7 @@
-(ns shan.help
+(ns shan.commands.help
   (:require
    [clojure.string :as str]
    [shan.print :as p]
-   [shan.util :as u]
    [shan.managers :as pm]))
 
 (defn build-name [cmd subcmd desc]

@@ -1,27 +1,28 @@
-(ns shan.init
+(ns shan.commands.init
   (:require
    [clojure.string :as str]
    [shan.print :as p]
    [shan.config :as c]
    [shan.managers :as pm]
    [shan.util :as u]
-   [shan.edit :as edit]))
+   [shan.commands.edit :as edit]
+   [shan.commands.-options :as opts]))
 
-(defn write-config [config]
+(defn- write-config [config]
   (u/write-edn c/conf-file config)
   (when (u/yes-or-no true
                      "Would you like to edit your config"
                      "(Use this opportunity to remove what you don't need)")
-    (edit/cli-edit nil)))
+    ((edit/command :runs) edit/command nil)))
 
-(defn get-valid-package-managers [arguments]
+(defn- get-valid-package-managers [arguments]
   (reduce (fn [a v]
             (if (contains? (pm/installed-managers) (keyword v))
               (conj a (keyword v))
               (p/fatal-error "No such package manager" (p/bold v))))
           #{} arguments))
 
-(defn include-from-prompt [included manager]
+(defn- include-from-prompt [included manager]
   (cond
     (contains? included :uses) manager
 
@@ -30,7 +31,7 @@
 
     :else included))
 
-(defn include-from-set [included manager set]
+(defn- include-from-set [included manager set]
   (cond
     (contains? manager :uses) included
     (contains? set (:name manager))
@@ -39,7 +40,7 @@
       (assoc included (:name manager) ((:list manager))))
     :else included))
 
-(defn include-package-managers [pms]
+(defn- include-package-managers [pms]
   (->> (pm/installed-managers)
        (reduce-kv (fn [a k v] (conj a (into v {:name k}))) [])
        (group-by :type)
@@ -52,7 +53,7 @@
             (include-from-set a v pms)))
         {})))
 
-(defn cli-init [{:keys [_arguments]}]
+(defn- cli-init [{:keys [_arguments]}]
   (p/warnln "Do NOT include versions in your generation. It WILL break things.")
   (let [pms (get-valid-package-managers _arguments)
         config (include-package-managers pms)
@@ -63,3 +64,11 @@
       (write-config config))
 
     (if c/testing? config p/exit-code)))
+
+(def command
+  {:command "gen"
+   :short "ge"
+   :arguments? *
+   :description "Generates a config for first time use from installed packages"
+   :opts [opts/editor]
+   :runs cli-init})
