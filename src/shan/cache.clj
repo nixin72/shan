@@ -14,7 +14,7 @@
                (fn [a k {:keys [list]}]
                  (let [pkgs (list :versions? false)]
                    (assoc a k pkgs)))
-               {:regen-cache 8} pms)]
+               {:regen-cache 4} pms)]
     (reset! package-cache cache)
     (u/write-edn c/cache-file cache)
     cache))
