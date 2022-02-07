@@ -4,7 +4,9 @@
    [shan.print :as p]
    [shan.util :as u]
    [shan.managers :as pm]
-   [shan.config :as c]))
+   [shan.packages :as ps]
+   [shan.config :as c]
+   [shan.cache :as cache]))
 
 (defn- generate-success-report
   "Used to check which package installations succeeded or failed.
@@ -43,14 +45,15 @@
   (let [new-conf (u/get-new)
         install-map (u/flat-map->map _arguments (:default-manager new-conf))
         install-map (find-default-manager install-map)
-        result (reduce-kv #(assoc %1 %2 (pm/install-pkgs %2 %3 check))
+        result (reduce-kv #(assoc %1 %2 (ps/install-pkgs %2 %3 check))
                           {}
                           (dissoc install-map :default-manager))
         {:keys [success failed commands]} (generate-success-report result)
-        success (pm/replace-keys success)]
+        success (ps/replace-keys success)]
     (when failed
       (p/error "\nPackages that failed to install were not added to your config."))
 
+    (cache/add-to-cache install-map)
     (cond
       temp (u/add-to-temp success)
       (:default-manager install-map)

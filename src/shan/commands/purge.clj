@@ -3,14 +3,14 @@
    [shan.print :as p]
    [shan.config :as c]
    [shan.util :as u]
-   [shan.managers :as pm]
+   [shan.packages :as ps]
    [shan.commands.-options :as opts]))
 
 (defn- cli-purge
   "Deletes all packages in temporary.edn file"
   [{:keys [check]}]
   (let [remove-map (u/get-temp)
-        result (reduce-kv #(assoc %1 %2 (pm/remove-pkgs %2 %3 check))
+        result (reduce-kv #(assoc %1 %2 (ps/remove-pkgs %2 %3 check))
                           {}
                           remove-map)]
     (spit c/temp-file "{}")

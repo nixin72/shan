@@ -1,23 +1,29 @@
 (ns shan.cache
   (:require
    [shan.print :as p]
-   [shan.managers :as pm]
+   [shan.managers :as m]
    [shan.config :as c]
    [shan.util :as u]))
 
 (def package-cache (atom nil))
+(def cache-lock (atom false))
 
 (defn- generate-cache []
   (p/logln "Updating cache")
-  (let [pms (pm/installed-managers)
-        cache (reduce-kv
-               (fn [a k {:keys [list]}]
-                 (let [pkgs (list :versions? false)]
-                   (assoc a k pkgs)))
-               {:regen-cache 4} pms)]
-    (reset! package-cache cache)
-    (u/write-edn c/cache-file cache)
-    cache))
+  (when-not @cache-lock
+    (reset! cache-lock true)
+    (let [pms (m/installed-managers)
+          cache (reduce-kv
+                 (fn [a k {:keys [list uses]}]
+                   (if (nil? uses)
+                     (let [pkgs (list :versions? false)]
+                       (assoc a k pkgs))
+                     a))
+                 {:regen-cache 4} pms)]
+      (u/write-edn c/cache-file cache)
+      (reset! package-cache cache)
+      (reset! cache-lock false)
+      cache)))
 
 (defn read-cache []
   (if (nil? @package-cache)
@@ -25,7 +31,12 @@
     (let [cache (u/read-edn c/cache-file)]
       (if (nil? cache)
         ;; Generate a new cache if the cache is empty
-        (generate-cache)
+        (if-let [cache (generate-cache)]
+          ;; Return the cache
+          cache
+          ;; If the cache is already in the middle of being updated, wait for the lock to be released
+          (do (while @cache-lock (Thread/sleep 100))
+              @package-cache))
         (if (= (:regen-cache cache) 0)
           ;; Generate a new cache on another thread if it's "out of date" and return the old one
           (do (future (generate-cache))
@@ -38,3 +49,16 @@
             cache))))
     ;; Return the package cache that's already in-memory
     @package-cache))
+
+(defn add-to-cache [pkgs]
+  (while (or @cache-lock (nil? @package-cache)) nil)
+  (let [updated-cache (swap! package-cache u/merge-conf pkgs)]
+    (u/write-edn c/cache-file updated-cache)
+    updated-cache))
+
+(defn remove-from-cache [pkgs]
+  (while (or @cache-lock (nil? @package-cache)) nil)
+  (println "Remove" pkgs)
+  (let [updated-cache (swap! package-cache u/remove-from-config pkgs)]
+    (u/write-edn c/cache-file updated-cache)
+    updated-cache))

@@ -16,7 +16,7 @@
                       :out
                       str/split-lines
                       (map #(str/split % #" "))
-                      (map #(hash-map (symbol (first %)) (last %))))]
+                      (map #(hash-map (first %) (last %))))]
     (if preserve-versions? packages (into [] (keys packages)))))
 
 (defn pacman [& _]
@@ -50,7 +50,7 @@
             (if (map? deps)
               (reduce-kv #(assoc %1 %2 (%3 "version")) {} deps)
               (->> (vals deps)
-                   (map #(hash-map (symbol (% "from")) (% "version")))
+                   (map #(hash-map (% "from") (% "version")))
                    (apply merge))))))]
 
     (if preserve-versions? packages (into [] (keys packages)))))
@@ -63,7 +63,7 @@
         (->> (sh/sh "python" "-m" "pip" "list" "--user" "--exclude" "pip" "--format" "json")
              :out
              json/read-str
-             (mapv #(hash-map (symbol (% "name")) (% "version")))
+             (mapv #(hash-map (% "name") (% "version")))
              (apply merge))]
     (if preserve-versions? packages (into [] (keys packages)))))
 
@@ -76,7 +76,7 @@
                  :out
                  str/split-lines
                  (map #(str/split % #" "))
-                 (map #(hash-map (symbol (first %)) (str/replace (last %) #"[\(\)]" "")))
+                 (map #(hash-map (first %) (str/replace (last %) #"[\(\)]" "")))
                  (apply merge))]
     (if preserve-versions? packages (into [] (keys packages)))))
 

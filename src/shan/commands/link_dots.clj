@@ -1,5 +1,5 @@
 (ns shan.commands.link-dots
-  (:import [java.nio.file Files FileSystems])
+  (:import [java.nio.file FileSystems])
   (:require
    [clojure.string :as str]
    [shan.print :as p]

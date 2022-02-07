@@ -1,7 +1,7 @@
 (ns shan.commands.rollback
   (:require
    [clojure.data :as data]
-   [shan.managers :as pm]
+   [shan.packages :as ps]
    [shan.print :as p]
    [shan.util :as u]
    [shan.config :as c]))
@@ -17,8 +17,8 @@
       (u/remove-generation))
 
     (if c/testing?
-      [(reduce-kv #(assoc %1 %2 (when %3 (pm/install-pkgs %2 %3 check))) {} add)
-       (reduce-kv #(assoc %1 %2 (when %3 (pm/remove-pkgs %2 %3 check))) {} del)]
+      [(reduce-kv #(assoc %1 %2 (when %3 (ps/install-pkgs %2 %3 check))) {} add)
+       (reduce-kv #(assoc %1 %2 (when %3 (ps/remove-pkgs %2 %3 check))) {} del)]
       p/exit-code)))
 
 (def command

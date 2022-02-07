@@ -59,6 +59,18 @@
   ([conf1 conf2 & confs]
    (apply merge-conf (merge-conf conf1 conf2) confs)))
 
+(defn remove-from-config [conf pkgs]
+  (reduce-kv
+   (fn [a k v]
+     (if (coll? v)
+       (let [diff (into [] (set/difference (into #{} (a k)) (into #{} v)))]
+         (if (empty? diff)
+           (dissoc a k)
+           (update a k #(into [] (set/difference (into #{} %) (into #{} v))))))
+       (if (contains? a k) (dissoc a k) a)))
+   conf
+   pkgs))
+
 (defn flat-map->map [vector-map default-key]
   (->> (reduce (fn [a v]
                  (let [kw (cond
@@ -77,18 +89,6 @@
                    (update a k into v)
                    (assoc a k (into (ordered-set) v))))
                (ordered-map))))
-
-(defn remove-from-config [conf pkgs]
-  (reduce-kv
-   (fn [a k v]
-     (if (coll? v)
-       (let [diff (into [] (set/difference (into #{} (a k)) (into #{} v)))]
-         (if (empty? diff)
-           (dissoc a k)
-           (update a k #(into [] (set/difference (into #{} %) (into #{} v))))))
-       (if (contains? a k) (dissoc a k) a)))
-   conf
-   pkgs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;; NOTE: Stateful functions beyond this point ;;;;;;;;;;;;;;;;;;;;;;;;;;

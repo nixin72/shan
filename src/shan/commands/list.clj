@@ -5,7 +5,7 @@
    [clojure.data.json :as json]
    [shan.print :as p]
    [shan.util :as u]
-   [shan.managers :as pm]
+   [shan.packages :as ps]
    [shan.commands.-options :as opts]))
 
 (defn- ignore-keys [config]
@@ -50,7 +50,7 @@
 
       ;; TODO: Make this speeby
       (->> _arguments
-           (mapv #(reduce (fn [a v] (assoc a v [%])) {} (pm/installed-with %)))
+           (mapv #(reduce (fn [a v] (assoc a v [%])) {} (ps/installed-with %)))
            (apply u/merge-conf)
            prn))
 
