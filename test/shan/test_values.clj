@@ -73,4 +73,4 @@
 
 (def deserialized-config
   (assoc deserialized-complex-config
-         :npm #{(symbol "@react-navigation/stack")}))
+         :npm #{"@react-navigation/stack"}))

@@ -78,11 +78,10 @@
   (with-package-manager [pm manager]
     (with-sudo pm
       (p/logln "Uninstalling" (p/bold (name manager)) "packages:")
-      (let [{:keys [remove installed?]} pm
+      (let [{:keys [remove]} pm
             out (u/remove-all
                  pkgs
-                 (make-fn remove verbose? :sudo? (:sudo? pm))
-                 (make-fn installed? false :sudo? (:sudo? pm)))]
+                 (make-fn remove verbose? :sudo? (:sudo? pm)))]
         (newline)
         (zipmap (map #(str remove " " %) pkgs) out)))))
 
@@ -112,3 +111,5 @@
          a))
      []
      (pm/installed-managers))))
+
+#_(installed-with "from-template")

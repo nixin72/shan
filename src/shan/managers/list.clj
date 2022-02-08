@@ -3,6 +3,7 @@
    [clojure.data.json :as json]
    [clojure.string :as str]
    [clojure.java.shell :as sh]
+   [flatland.ordered.set :as set]
    [shan.print :as p]
    [shan.util :as u]))
 
@@ -17,10 +18,10 @@
                       str/split-lines
                       (map #(str/split % #" "))
                       (map #(hash-map (first %) (last %))))]
-    (if preserve-versions? packages (into [] (keys packages)))))
+    (if preserve-versions? packages (into (set/ordered-set) (keys packages)))))
 
 (defn pacman [& _]
-  (->> (sh/sh "pacman" "-Qqett") :out str/split-lines (into [])))
+  (->> (sh/sh "pacman" "-Qqett") :out str/split-lines (into (set/ordered-set))))
 
 (defn npm [& {:keys [versions?]}]
   (let [preserve-versions? (if (nil? versions?)
@@ -53,7 +54,7 @@
                    (map #(hash-map (% "from") (% "version")))
                    (apply merge))))))]
 
-    (if preserve-versions? packages (into [] (keys packages)))))
+    (if preserve-versions? packages (into (set/ordered-set) (keys packages)))))
 
 (defn pip [& {:keys [versions?]}]
   (let [preserve-versions? (if (nil? versions?)
@@ -65,7 +66,7 @@
              json/read-str
              (mapv #(hash-map (% "name") (% "version")))
              (apply merge))]
-    (if preserve-versions? packages (into [] (keys packages)))))
+    (if preserve-versions? packages (into (set/ordered-set) (keys packages)))))
 
 (defn gem [& {:keys [versions?]}]
   (let [preserve-versions? (if (nil? versions?)
@@ -78,14 +79,15 @@
                  (map #(str/split % #" "))
                  (map #(hash-map (first %) (str/replace (last %) #"[\(\)]" "")))
                  (apply merge))]
-    (if preserve-versions? packages (into [] (keys packages)))))
+    (if preserve-versions? packages (into (set/ordered-set) (keys packages)))))
 
 (defn gu [& _]
   (some->> (sh/sh "gu" "list")
            :out
            str/split-lines
            (drop 2)
-           (mapv #(first (str/split % #" ")))))
+           (map #(first (str/split % #" ")))
+           (into (set/ordered-set))))
 
 (defn raco [& _]
   (some->> (sh/sh "raco" "pkg" "show" "-u")
@@ -93,4 +95,5 @@
            str/split-lines
            (rest)
            (drop-last 1)
-           (mapv #(first (str/split % #" ")))))
+           (map #(first (str/split % #" ")))
+           (into (set/ordered-set))))

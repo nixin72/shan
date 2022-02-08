@@ -260,7 +260,7 @@
 
 (defn remove-all
   "Removes all the packages specified in pkgs using the remove-fn"
-  [pkgs remove-fn installed?]
+  [pkgs remove-fn]
   (->>
       ;; Avoid doing the same thing twice
    (into (ordered-set) pkgs)
@@ -268,8 +268,6 @@
    (mapv (fn [p]
            (cond
              (nil? p) false
-             (not (already-installed? installed? p))
-             (println (p/bold p) "is already uninstalled.")
              :else
              (let [out (p/loading
                         (str "Uninstalling " (p/bold p) "...")

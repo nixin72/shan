@@ -58,7 +58,6 @@
 
 (defn remove-from-cache [pkgs]
   (while (or @cache-lock (nil? @package-cache)) nil)
-  (println "Remove" pkgs)
   (let [updated-cache (swap! package-cache u/remove-from-config pkgs)]
     (u/write-edn c/cache-file updated-cache)
     updated-cache))

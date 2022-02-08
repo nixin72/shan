@@ -53,7 +53,7 @@
     (when failed
       (p/error "\nPackages that failed to install were not added to your config."))
 
-    (cache/add-to-cache install-map)
+    (cache/add-to-cache (ps/replace-keys install-map))
     (cond
       temp (u/add-to-temp success)
       (:default-manager install-map)

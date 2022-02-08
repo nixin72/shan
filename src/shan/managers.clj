@@ -77,7 +77,7 @@
    :raco {:type :language
           :list list/raco
           :remove "raco pkg remove"
-          :install "raco pkg install"
+          :install "raco pkg install --deps search-auto --batch"
           :installed? installed/raco?}
    :gu {:type :language
         :list list/gu

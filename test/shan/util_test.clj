@@ -32,7 +32,7 @@
            '{:npm {underscore "1"}})))
 
   (testing "Test serializing a versioned config that needs serialization"
-    (is (= (u/serialize {:npm {(symbol "@react-navigation/stack") "1"}})
+    (is (= (u/serialize {:npm {"@react-navigation/stack" "1"}})
            '{:npm {"@react-navigation/stack" "1"}})))
 
   (testing "Test serializing a config with some versioned PMs and some not."
@@ -65,7 +65,7 @@
 
   (testing "Test deserializing a versioned config that needs serialization"
     (is (= (u/deserialize {:npm {"@react-navigation/stack" "1"}})
-           {:npm {(symbol "@react-navigation/stack") "1"}})))
+           {:npm {"@react-navigation/stack" "1"}})))
 
   (testing "Test serializing a config with some versioned PMs and some not."
     (is (= (u/deserialize '{:yay [nano] :npm {react "2"}})
@@ -336,7 +336,7 @@
   (testing "Write hash that requires serialization to default config file"
     (is (= (suppress-side-effects
             (u/write-edn c/conf-file {:yay '[atop htop]
-                                      :npm [(symbol "@react-navigation/stack")]}))
+                                      :npm ["@react-navigation/stack"]}))
            '{:yay [atop htop]
              :npm ["@react-navigation/stack"]}))))
 

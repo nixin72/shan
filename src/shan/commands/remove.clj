@@ -31,8 +31,7 @@
   (apply
    u/merge-conf
    (mapv (fn [pkg]
-           (let [pkg (symbol pkg)
-                 pms (reduce-kv #(if (some #{pkg} %3) (conj %1 %2) %1) [] conf)]
+           (let [pms (reduce-kv #(if (some #{pkg} %3) (conj %1 %2) %1) [] conf)]
              (cond
                (= (count pms) 1) {(first pms) [pkg]}
                (= (count pms) 0) (remove-with-pm-from-installed pkg)
@@ -50,7 +49,7 @@
         out (reduce-kv #(assoc %1 %2 (ps/remove-pkgs %2 %3 check))
                        {}
                        remove-map)]
-    (cache/remove-from-cache remove-map)
+    (cache/remove-from-cache (ps/replace-keys remove-map))
     (if temp
       (u/remove-from-temp conf remove-map)
       (u/remove-from-conf conf remove-map))
