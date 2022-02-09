@@ -11,7 +11,8 @@
         default (first _arguments)]
     (cond
       (nil? default)
-      (p/error (str "Argument expected. Use shan default --help for details."))
+      (println (or (name (:default-manager conf))
+                   "No default package manager has been set."))
 
       (contains? pm/package-managers (keyword default))
       (u/write-edn c/conf-file (assoc conf :default-manager (keyword default)))
