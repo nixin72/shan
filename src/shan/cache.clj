@@ -8,7 +8,7 @@
 (def package-cache (atom nil))
 (def cache-lock (atom false))
 
-(defn- generate-cache []
+(defn generate-cache []
   (p/logln "Updating cache")
   (when-not @cache-lock
     (reset! cache-lock true)

@@ -16,8 +16,9 @@
    [shan.commands.list :as list]
    [shan.commands.merge :as merge]
    [shan.commands.purge :as purge]
-   [shan.commands.remove-archive :as remove-archive]
+   [shan.commands.regen-cache :as regen-cache]
    [shan.commands.remove :as remove]
+   [shan.commands.remove-archive :as remove-archive]
    [shan.commands.rollback :as rollback]
    [shan.commands.sync :as sync]
    [shan.commands.unlink :as unlink])
@@ -43,6 +44,7 @@
     link-dots/command
     edit/command
     purge/command
+    regen-cache/command
     merge/command
     list/command
     init/command]})
