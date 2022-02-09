@@ -107,12 +107,6 @@
   (let [{:keys [command flags options arguments]}
         (parse-arguments arguments config)]
     (cond
-      (nil? (command? command config))
-      (do (p/error "Unknown command"
-                   (p/bold command) "."
-                   "Use" (p/bold "shan --help") "to see all options.")
-          (help/global-help config))
-
       (some #{:help} flags)
       (if (nil? command)
         (help/global-help config)
@@ -121,10 +115,14 @@
       (some #{:version} flags)
       (println c/version)
 
+      (nil? (command? command config))
+      (p/errorln "Unknown command"
+                 (str (p/bold command) ".")
+                 "Use" (p/bold "shan --help") "to see all options.")
+
       (nil? command)
-      (do (p/error "No command specified."
-                   "Use" (p/bold "shan --help") "to see all options.")
-          (help/global-help config))
+      (p/error "No command specified."
+               "Use" (p/bold "shan --help") "to see all options.")
 
       :else
       (let [run-fn (:runs (subcmd command config))]
