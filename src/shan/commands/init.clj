@@ -66,8 +66,7 @@
     (if c/testing? config p/exit-code)))
 
 (def command
-  {:command "gen"
-   :short "ge"
+  {:command "init"
    :arguments? *
    :description "Generates a config for first time use from installed packages"
    :opts [opts/editor]

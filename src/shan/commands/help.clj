@@ -30,8 +30,10 @@
 (defn build-version [version]
   (str "\n" (p/bold "VERSION:") "\n " version "\n"))
 
-(defn build-command [cmd]
-  (format "\n    %s, %-11s %s" (:short cmd) (:command cmd) (:description cmd)))
+(defn build-command [{:keys [short command description]}]
+  (if (nil? short)
+    (format "\n        %-11s %s" command description)
+    (format "\n    %s, %-11s %s" short command description)))
 
 (defn build-commands [commands]
   (->> commands
