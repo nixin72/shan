@@ -5,12 +5,13 @@
    [flatland.ordered.set :refer [ordered-set]]
    [shan.macros :refer [with-test-data suppress-side-effects suppress-stdout]]
    [shan.test-values :as v]
+   [shan.print :as p]
    [shan.util :as u]
    [shan.config :as c]))
 
 ;;;;;;;;;;; serialize ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-serialize
-  (println "Testing function" (u/bold "util/serialize"))
+  (println "Testing function" (p/bold "util/serialize"))
 
   (testing "Test serializing an empty map"
     (is (= (u/serialize {}) {})))
@@ -44,7 +45,7 @@
 
 ;;;;;;;;;;; deserialize ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-deserialize
-  (println "Testing function" (u/bold "util/deserialize"))
+  (println "Testing function" (p/bold "util/deserialize"))
 
   (testing "Test deserializing an empty map"
     (is (= (u/deserialize {}) {})))
@@ -76,7 +77,7 @@
 
 ;;;;;;;;;;; unordered= ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-unordered=
-  (println "Testing function" (u/bold "util/unordered="))
+  (println "Testing function" (p/bold "util/unordered="))
 
   (testing "Test with empty unordered data structures"
     (is (true? (u/unordered= {} {})))
@@ -112,7 +113,7 @@
 
 ;;;;;;;;;;; do-merge ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-do-merge
-  (println "Testing function" (u/bold "util/do-merge"))
+  (println "Testing function" (p/bold "util/do-merge"))
 
   (testing "Test merging two empty maps"
     (is (= (u/do-merge {} {}) {})))
@@ -133,7 +134,7 @@
 
 ;;;;;;;;;;; merge-conf/1 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-merge-conf:1
-  (println "Testing function" (u/bold "util/merge-conf:1"))
+  (println "Testing function" (p/bold "util/merge-conf:1"))
 
   (testing "Test merging with a single empty map"
     (is (= (u/merge-conf {}) {})))
@@ -143,7 +144,7 @@
 
 ;;;;;;;;;;; merge-conf/2 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-merge-conf:2
-  (println "Testing function" (u/bold "util/merge-conf:2"))
+  (println "Testing function" (p/bold "util/merge-conf:2"))
 
   (testing "Test merging empty configs"
     (is (= (u/merge-conf {} {}) {})))
@@ -174,7 +175,7 @@
 
 ;;;;;;;;;;; merge-conf/3 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-merge-conf:3
-  (println "Testing function" (u/bold "util/merge-conf:3"))
+  (println "Testing function" (p/bold "util/merge-conf:3"))
 
   (testing "Test merging empty configs"
     (is (= (u/merge-conf {} {} {}) {})))
@@ -215,7 +216,7 @@
 
 ;;;;;;;;;;; flat-map->map ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-flat-map->map
-  (println "Testing function" (u/bold "util/flat-map->map"))
+  (println "Testing function" (p/bold "util/flat-map->map"))
 
   (testing "Test with empty input"
     (is (= (u/flat-map->map v/empty-input v/default-package-manager)
@@ -253,7 +254,7 @@
 
 ;;;;;;;;;;; remove-from-config ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-remove-from-config
-  (println "Testing function" (u/bold "util/remove-from-config"))
+  (println "Testing function" (p/bold "util/remove-from-config"))
 
   (testing "Test with empty input"
     (is (= (u/remove-from-config {} {}) {})))
@@ -294,7 +295,7 @@
 
 ;;;;;;;;;;; read-edn ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-read-edn
-  (println "Testing function" (u/bold "util/read-edn"))
+  (println "Testing function" (p/bold "util/read-edn"))
 
   (testing "Read from non-existant file"
     (is (= (u/read-edn "path/to/garbage-file-name.edn")
@@ -312,7 +313,7 @@
 
 ;;;;;;;;;;; write-edn ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-write-edn
-  (println "Testing function" (u/bold "util/write-edn"))
+  (println "Testing function" (p/bold "util/write-edn"))
 
   (testing "Write to non-existant file"
     (is (= (u/write-edn "path/to/garbage-file-name.edn" {}) nil)))
@@ -342,7 +343,7 @@
 
 ;;;;;;;;;;; get-new ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-get-new
-  (println "Testing function" (u/bold "util/get-new"))
+  (println "Testing function" (p/bold "util/get-new"))
 
   (testing "Get test config file"
     (is (= (with-test-data (u/get-new))
@@ -350,7 +351,7 @@
 
 ;;;;;;;;;;; get-temp ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-get-temp
-  (println "Testing function" (u/bold "util/get-temp"))
+  (println "Testing function" (p/bold "util/get-temp"))
 
   (testing "Get test temp file"
     (is (= (with-test-data (u/get-temp))
@@ -358,7 +359,7 @@
 
 ;;;;;;;;;;; get-old ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-get-old
-  (println "Testing function" (u/bold "util/get-old"))
+  (println "Testing function" (p/bold "util/get-old"))
 
   (testing "Get test temp file"
     (is (= (with-test-data (u/get-old))
@@ -366,7 +367,7 @@
 
 ;;;;;;;;;;; add-generation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-add-generation
-  (println "Testing function" (u/bold "util/add-generation"))
+  (println "Testing function" (p/bold "util/add-generation"))
 
   (suppress-stdout
    (testing "Add a single empty map as generation."
@@ -382,7 +383,7 @@
 
 ;;;;;;;;;;; add-to-temp ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-add-to-temp
-  (println "Testing function" (u/bold "util/add-to-temp"))
+  (println "Testing function" (p/bold "util/add-to-temp"))
 
   (testing "Add an empty map, making no changes."
     (is (= (u/deserialize (with-test-data (u/add-to-temp {})))
@@ -398,7 +399,7 @@
 
 ;;;;;;;;;;; add-to-conf ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-add-to-conf
-  (println "Testing function" (u/bold "util/add-to-conf"))
+  (println "Testing function" (p/bold "util/add-to-conf"))
 
   (testing "Add an empty map, making no changes."
     (is (= (with-test-data (u/add-to-conf {}))
@@ -414,7 +415,7 @@
 
 ;;;;;;;;;;; remove-from-temp ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-remove-from-temp
-  (println "Testing function" (u/bold "util/remove-from-temp"))
+  (println "Testing function" (p/bold "util/remove-from-temp"))
 
   (testing "Remove an empty map, making no changes."
     (is (= (u/deserialize
@@ -442,7 +443,7 @@
 
 ;;;;;;;;;;; remove-from-conf ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-remove-from-conf
-  (println "Testing function" (u/bold "util/remove-from-conf"))
+  (println "Testing function" (p/bold "util/remove-from-conf"))
 
   (testing "Remove an empty map, making no changes."
     (is (= (with-test-data (u/remove-from-conf {}))
@@ -466,7 +467,7 @@
 
 ;;;;;;;;;;; install-all ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-install-all
-  (println "Testing function" (u/bold "util/install-all"))
+  (println "Testing function" (p/bold "util/install-all"))
 
   (testing "Install 0 packages"
     (is (= (suppress-side-effects (u/install-all [] identity identity))
@@ -489,23 +490,23 @@
 
 ;;;;;;;;;;; install-all ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-remove-all
-  (println "Testing function" (u/bold "util/install-all"))
+  (println "Testing function" (p/bold "util/install-all"))
 
   (testing "Remove 0 packages"
-    (is (= (suppress-side-effects (u/remove-all [] identity identity))
+    (is (= (suppress-side-effects (u/remove-all [] identity))
            [])))
 
   (testing "Remove a single package"
     (is (= (suppress-side-effects
-            (u/remove-all '[htop] identity identity))
+            (u/remove-all '[htop] identity))
            '[htop])))
 
   (testing "Remove several packages"
     (is (= (suppress-side-effects
-            (into #{} (u/remove-all '[htop nano micro] identity identity)))
+            (into #{} (u/remove-all '[htop nano micro] identity)))
            '#{micro nano htop})))
 
   (testing "Remove packages with failures"
     (is (= (suppress-side-effects
-            (u/remove-all '[htop nano micro] (constantly false) (constantly false)))
+            (u/remove-all '[htop nano micro] (constantly false)))
            [nil nil nil]))))

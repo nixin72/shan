@@ -1,6 +1,5 @@
 (ns shan.macros
   (:require
-   [clojure.string :as str]
    [clojure.java.shell]
    [clojure.java.io :as io]
    [clojure.pprint]
@@ -8,8 +7,7 @@
    [shan.util]
    [shan.managers.installed]
    [shan.test-values :as tv]
-   [shan.managers :as pm]
-   [shan.util :as u]))
+   [shan.managers :as pm]))
 
 (defn make-test-files []
   (-> c/data-dir java.io.File. .mkdirs)

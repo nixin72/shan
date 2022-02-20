@@ -2,13 +2,13 @@
   (:require
    [shan.parser :as p]
    [clojure.test :refer [deftest testing is]]
-   [shan.util :as u]
+   [shan.print :as pr]
    [shan.core :as core]
    [shan.edit :as edit]))
 
 ;;;;;;;;;;; test-subcmd ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-subcmd
-  (println "Testing function" (u/bold "parser/subcmd"))
+  (println "Testing function" (pr/bold "parser/subcmd"))
 
   (testing "Testing simple subcommand"
     (is (= (p/subcmd "merge" core/config)
@@ -25,17 +25,17 @@
 
 ;;;;;;;;;;; test-command ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-command
-  (println "Testing function" (u/bold "parser/command"))
+  (println "Testing function" (pr/bold "parser/command"))
 
   (testing "Testing simple subcommand"
-    (is (= (p/command "merge" core/config) "merge")))
+    (is (= (p/command? "merge" core/config) "merge")))
 
   (testing "Testing invalid subcommand"
-    (is (= (p/command "npm" core/config) nil))))
+    (is (= (p/command? "npm" core/config) nil))))
 
 ;;;;;;;;;;; test-get-flags ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-get-flags
-  (println "Testing function" (u/bold "parser/get-flags"))
+  (println "Testing function" (pr/bold "parser/get-flags"))
 
   (testing "Testing global flags"
     (is (= (p/get-flags (:global-opts core/config))
@@ -59,7 +59,7 @@
 
 ;;;;;;;;;;; test-flags ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-flag
-  (println "Testing function" (u/bold "parser/flag"))
+  (println "Testing function" (pr/bold "parser/flag"))
 
   (testing "Test getting a global flag"
     (is (= (p/flag "--help" nil core/config)
@@ -75,7 +75,7 @@
 
 ;;;;;;;;;;; test-get-options ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-get-options
-  (println "Testing function" (u/bold "parser/get-options"))
+  (println "Testing function" (pr/bold "parser/get-options"))
 
   (testing "Testing global options"
     (is (= (p/get-options (:global-opts core/config)) {})))
@@ -96,7 +96,7 @@
 
 ;;;;;;;;;;; test-option ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-option
-  (println "Testing function" (u/bold "parser/option"))
+  (println "Testing function" (pr/bold "parser/option"))
 
   (testing "Test getting a string option"
     (is (= (p/option "--format" "list" core/config)
@@ -107,7 +107,7 @@
 
 ;;;;;;;;;;; test-parse-option ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-parse-option
-  (println "Testing function" (u/bold "parser/parse-option"))
+  (println "Testing function" (pr/bold "parser/parse-option"))
 
   (testing "Test parsing a simple option"
     (is (= (p/parse-option "--format" ["json" "--temp"] {:command "list" :options {}} core/config)
@@ -115,7 +115,7 @@
 
 ;;;;;;;;;;; test-parse-arguments ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-parse-arguments
-  (println "Testing function" (u/bold "parser/parse-arguments"))
+  (println "Testing function" (pr/bold "parser/parse-arguments"))
 
   (testing "Test parsing empty input"
     (is (= (p/parse-arguments [] core/config)

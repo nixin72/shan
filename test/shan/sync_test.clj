@@ -3,11 +3,10 @@
    [clojure.test :refer [deftest testing is]]
    [shan.macros :refer [with-test-data suppress-state-changes]]
    [shan.sync :as s]
-   [shan.util :as u]
-   [shan.test-values :as v]))
+   [shan.print :as p]))
 
 (deftest test-cli-sync
-  (println "Testing function" (u/bold "install/generate-success-report"))
+  (println "Testing function" (p/bold "install/generate-success-report"))
 
   (suppress-state-changes
    (testing "Test with idential configs"

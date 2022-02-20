@@ -5,13 +5,14 @@
                         with-test-env
                         with-failed-operation
                         with-input-queue]]
+   [shan.print :as p]
    [shan.util :as u]
-   [shan.install :as in]
+   [shan.command.install :as in]
    [shan.test-values :as tv]))
 
 ;;;;;;;;;;; test-generate-success-report ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-generate-success-report
-  (println "Testing function" (u/bold "install/generate-success-report"))
+  (println "Testing function" (p/bold "install/generate-success-report"))
 
   (suppress-stdout
    (testing "Test empty results"
@@ -56,7 +57,7 @@
 
 ;;;;;;;;;;; test-find-default-manager ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-find-default-manager
-  (println "Testing function" (u/bold "install/find-default-manager"))
+  (println "Testing function" (p/bold "install/find-default-manager"))
 
   (suppress-stdout
    (testing "Getting finding default package manager without setting it."
@@ -79,7 +80,7 @@
 
 ;;;;;;;;;;; test-cli-install ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-cli-install
-  (println "Testing function" (u/bold "install/cli-install"))
+  (println "Testing function" (p/bold "install/cli-install"))
 
   (with-test-env [env tv/pre-installed-packages]
     (testing "Test installing a single known package"

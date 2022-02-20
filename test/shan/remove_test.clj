@@ -1,14 +1,15 @@
 (ns shan.remove-test
   (:require
    [clojure.test :refer [deftest testing is]]
+   [shan.print :as p]
    [shan.util :as u]
    [shan.test-values :as v]
    [shan.macros :refer [suppress-stdout with-input-queue with-test-env]]
-   [shan.remove :as rm]))
+   [shan.commands.remove :as rm]))
 
 ;;;;;;;;;;; remove-with-pm-from-list ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-remove-with-pm-from-list
-  (println "Testing function" (u/bold "remove/remove-with-pm-from-list"))
+  (println "Testing function" (p/bold "remove/remove-with-pm-from-list"))
 
   (suppress-stdout
    (testing "Test removing from first"
@@ -33,7 +34,7 @@
 
 ;;;;;;;;;;; remove-with-pm-from-installed ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-remove-with-pm-from-installed
-  (println "Testing function" (u/bold "remove/remove-with-pm-from-installed"))
+  (println "Testing function" (p/bold "remove/remove-with-pm-from-installed"))
 
   (with-test-env [_ v/pre-installed-packages]
     (testing "Test with non-existant package"
@@ -52,7 +53,7 @@
 
 ;;;;;;;;;;; find-package-manager ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-find-package-manager
-  (println "Testing function" (u/bold "remove/find-package-manager"))
+  (println "Testing function" (p/bold "remove/find-package-manager"))
 
   (with-test-env [_ v/pre-installed-packages]
     (testing "Test finding package manager for single package"
@@ -102,7 +103,7 @@
 
 ;;;;;;;;;;; test-cli-remove ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (deftest test-cli-remove
-  (println "Testing function" (u/bold "remove/cli-remove"))
+  (println "Testing function" (p/bold "remove/cli-remove"))
 
   (with-test-env [_ v/pre-installed-packages]
     (testing "Test removing a single known package"
