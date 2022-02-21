@@ -8,7 +8,7 @@
    [shan.commands.-options :as opts]
    [shan.cache :as cache]))
 
-(defn- remove-with-pm-from-list [pms pkg]
+(defn remove-with-pm-from-list [pms pkg]
   (let [pm (u/prompt (str "Which package manager(s) would you like to remove "
                           (p/blue pkg)  " using?\n")
                      (conj pms :all))]
@@ -16,7 +16,7 @@
       (reduce #(assoc %1 %2 [pkg]) {} pms)
       {pm [pkg]})))
 
-(defn- remove-with-pm-from-installed [pkg]
+(defn remove-with-pm-from-installed [pkg]
   (let [pms (ps/installed-with pkg)]
     (cond
       (= (count pms) 0)
@@ -27,7 +27,7 @@
       (= (count pms) 1) {(first pms) [pkg]}
       :else (remove-with-pm-from-list pms pkg))))
 
-(defn- find-package-manager [conf pkgs]
+(defn find-package-manager [conf pkgs]
   (apply
    u/merge-conf
    (mapv (fn [pkg]
@@ -38,7 +38,7 @@
                :else (remove-with-pm-from-list pms pkg))))
          pkgs)))
 
-(defn- cli-remove [{:keys [check temp _arguments]}]
+(defn cli-remove [{:keys [check temp _arguments]}]
   (let [conf (if temp (u/get-temp) (u/get-new))
         remove-map (u/flat-map->map _arguments :default)
         default (find-package-manager (dissoc conf :default-manager)

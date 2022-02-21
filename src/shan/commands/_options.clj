@@ -30,11 +30,19 @@
    :short "f"
    :type #{"human" "json" "parse" "edn"}})
 
-(def context
-  (str " Given the following shan.edn config file:\n"
-       (p/red " {") (p/blue ":default-manager :yay") "\n"
-       (p/blue "  :yay") " " (p/yellow "[") "nodejs python3 neovim atop" (p/yellow "]") "\n"
-       (p/blue "  :npm") " " (p/yellow "[") "atop react" (p/yellow "]") (p/red "}") "\n\n"))
+(def batch?
+  {:as "Perfoms the operation in batch. Good for performance."
+   :default false
+   :option "batch"
+   :short "b"
+   :type :with-flag})
+
+(def parallel?
+  {:as "Installs packages from various managers in parallel."
+   :default false
+   :option "parallel"
+   :short "p"
+   :type :with-flag})
 
 (def help
   {:as "Show this help page"
@@ -49,3 +57,9 @@
    :option "version"
    :short "v"
    :type :with-flag})
+
+(def context
+  (str " Given the following shan.edn config file:\n"
+       (p/red " {") (p/blue ":default-manager :yay") "\n"
+       (p/blue "  :yay") " " (p/yellow "[") "nodejs python3 neovim atop" (p/yellow "]") "\n"
+       (p/blue "  :npm") " " (p/yellow "[") "atop react" (p/yellow "]") (p/red "}") "\n\n"))

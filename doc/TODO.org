@@ -4,7 +4,7 @@
   - [-] install/remove packages
     - [ ] Thing should be /ordered/ to ensure dependencies are met.
       - ~shan install npm -npm underscore~ shouldn't fail because npm tries to go first.
-    - [ ] Should be able to list packages in flag-style format like above
+    - [x] Should be able to list packages in flag-style format like above
     - [-] Support for lots of package managers. It would be cool to be able to support:
       - [X] yay
       - [X] paru
@@ -40,15 +40,16 @@
       - [X] human
   - [ ] search for packages
     - [ ] Display package info from package manager it belongs to
-      - [ ] This is really slow right now because finding out which package manager a package
+      - [x] This is really slow right now because finding out which package manager a package
         belongs to is slow. Some caching could do good here.
-  - [ ] merging/purging temporary packages
+  - [x] merging/purging temporary packages
   - [X] importing packages to start using shan
   - [ ] support adding different mirrors for certain package managers. Ex. Manjaro uses a different
     AUR mirror than Arch Linux.
     - [ ] update mirrors without updating packages
-- [x] manager dotfiles
+- [-] manager dotfiles
   - [x] symlink dotfiles from one place to another
+  - [ ] make sync work with adding/removing symlinks
 - [ ] install software not in package managers
   - [ ] run system commands
   - [ ] run scripts

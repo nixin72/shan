@@ -49,7 +49,7 @@
            (reset! password pass#)))
        ~@body))
 
-(defn install-pkgs [manager pkgs verbose?]
+(defn install-pkgs [manager pkgs verbose? batch?]
   (with-package-manager [pm manager]
     (when (contains? pm :pre-install)
       (apply (make-fn (:pre-install pm) verbose?) []))

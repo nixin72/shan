@@ -26,7 +26,7 @@
   (cond
     (contains? included :uses) manager
 
-    (u/yes-or-no true "Would you like to include" (-> manager :name name p/bold))
+    (u/yes-or-no true "● Would you like to include" (-> manager :name name p/bold))
     (assoc included (:name manager) ((:list manager)))
 
     :else included))

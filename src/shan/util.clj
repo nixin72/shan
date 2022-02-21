@@ -136,12 +136,9 @@
       (.redirectInput inherit))
     (.waitFor (.start process))))
 
-(defn new-function [file-name]
-  (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read deserialize))
-
 (defn read-edn [file-name]
   (try
-    (new-function file-name)
+    (->> file-name slurp .getBytes io/reader java.io.PushbackReader. edn/read deserialize)
     (catch java.io.FileNotFoundException _
       nil)))
 
