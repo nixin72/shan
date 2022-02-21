@@ -67,7 +67,7 @@
         (run-cmd ["--help"] config))))
 
   (shutdown-agents)
-  @p/exit-code)
+  (System/exit @p/exit-code))
 
 (comment
   "Some tests:"
