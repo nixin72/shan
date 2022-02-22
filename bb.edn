@@ -6,7 +6,7 @@
             (def jar-name "shan.jar"))
 
   clean {:doc "Clean the project"
-         :task (shell "rm -rf .cpcache target shan shan.build_artifacts.txt shan.jar")}
+         :task (shell "rm -rf .cpcache target shan*")}
 
   main {:doc "Run main"
         :extra-paths ["test"]

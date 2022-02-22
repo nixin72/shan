@@ -1,12 +1,14 @@
 [
-    {
-        "name":"java.io.File",
-        "allPublicMethods": true
-    },
-    {
-        "name": "java.lang.ProcessBuilder",
-        "allDeclaredFields": true,
-        "allDeclaredMethods": true,
-        "allDeclaredConstructors": true
-    }
+  {
+    "name": "java.io.File",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "java.lang.ProcessBuilder",
+    "allDeclaredFields": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true
+  }
 ]
