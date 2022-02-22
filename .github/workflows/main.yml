@@ -130,11 +130,12 @@ jobs:
         if: contains(github.ref, 'v')
         run: echo "UPLOAD_URL=$(cat upload_url.txt)" >> $GITHUB_ENV
           
+      - run: pwd
       - run: ls -lah
                 
       - name: Build native image
         run: |
-          native-image -jar shan-${{env.VERSION}}-snapshot.jar \
+          native-image -jar shan-standalone.jar \
                        --no-server \
                        --no-fallback \
                        --allow-incomplete-classpath \
