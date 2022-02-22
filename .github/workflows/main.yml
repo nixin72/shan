@@ -135,7 +135,6 @@ jobs:
           native-image -jar shan-standalone.jar \
                        --no-server \
                        --no-fallback \
-                       --allow-incomplete-classpath \
                        --trace-object-instantiation=java.lang.Thread \
                        -H:Name=shan-${{env.VERSION}}-snapshot-linux \
                        -H:ReflectionConfigurationFiles=reflect-config.json \
