@@ -146,7 +146,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with: 
           name: shan-${{env.VERSION}}-snapshot-linux
-          path: shan-${{env.VERSION}}-snapshot
+          path: shan-${{env.VERSION}}-snapshot-linux
           
       - name: Upload Linux Image Asset
         if: success() && contains(github.ref, 'v')
