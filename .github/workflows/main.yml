@@ -15,14 +15,9 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build-jar:
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout code
         uses: actions/checkout@v2
 
@@ -89,3 +84,72 @@ jobs:
         with:
           name: "upload_url.txt"
           path: "upload_url.txt"
+  build-linux:
+    needs: [build-jar]
+    name: Build Linux Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        
+      - name: Setup Java
+        uses: actions/setup-java@v1
+        with:
+          distribution: "temurin"
+          java-version: 11
+          
+      - name: Setup GraalVM
+        uses: DeLaGuardo/setup-graalvm@2.0
+        with: 
+          graalvm-version: 21.3.0
+          
+      - name: Install native-image plugin
+        run: gu install native-image
+        
+      - name: Get version number
+        run: | 
+          echo "VERSION=$(cat deps.edn | grep :version | awk '{print substr($2, 2, length($2)-2)}')" >> $GITHUB_ENV
+      
+      - name: Get JAR file
+        uses: actions/download-artifact@v2
+        with:
+          name: shan-${{env.VERSION}}-snapshot.jar
+      
+      - name: Download release URL
+        if: contains(github.ref, 'v')
+        uses: actions/download-artifact@v2
+        with:
+          name: 'upload-url.txt'
+          
+      - name: Set upload URL env var
+        if: contains(github.ref, 'v')
+        run: |
+          echo "UPLOAD_URL=$(cat upload_url.txt)" >> $GITHUB_ENV
+          
+      - name: Build native image
+        run: |
+          native-image -jar shan-${{env.VERSION}}-snapshot.jar \
+                       --no-server \
+                       --no-fallback \
+                       -H:ReflectionConfigurationFiles=reflect-config.json \
+                       -H:+ReportExceptionStackTraces \
+                       --trace-object-instantiation=java.lang.Thread
+      - name: Publish Linux Image
+        if: success()
+        uses: actions/upload-artifact@v2
+        with: 
+          name: shan-${{env.VERSION}}-snapshot-linux
+          path: shan-${{env.VERSION}}-snapshot
+          
+      - name: Upload Linux Image Asset
+        if: success() && contains(github.ref, 'v')
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env: 
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with: 
+          upload_url: ${{env.UPLOAD_URL}}
+          asset_name: shan-${{env.VERSION}}-snapshot-linux
+          asset_path: shan-${{env.VERSION}}-snapshot
+          asset_content_type: application/octet-stream
+        
