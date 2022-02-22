@@ -84,6 +84,11 @@ jobs:
         with:
           name: "upload_url.txt"
           path: "upload_url.txt"
+          
+################################################################################
+################################################################################
+################################################################################
+
   build-linux:
     needs: [build-jar]
     name: Build Linux Image
@@ -123,8 +128,7 @@ jobs:
           
       - name: Set upload URL env var
         if: contains(github.ref, 'v')
-        run: |
-          echo "UPLOAD_URL=$(cat upload_url.txt)" >> $GITHUB_ENV
+        run: echo "UPLOAD_URL=$(cat upload_url.txt)" >> $GITHUB_ENV
           
       - name: Build native image
         run: |
@@ -134,6 +138,7 @@ jobs:
                        -H:ReflectionConfigurationFiles=reflect-config.json \
                        -H:+ReportExceptionStackTraces \
                        --trace-object-instantiation=java.lang.Thread
+                       
       - name: Publish Linux Image
         if: success()
         uses: actions/upload-artifact@v2
