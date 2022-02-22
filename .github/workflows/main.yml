@@ -132,12 +132,13 @@ jobs:
           
       - name: Build native image
         run: |
-          native-image -jar shan-${{env.VERSION}}-snapshot.jar \
-                       --no-server \
+          native-image --no-server \
                        --no-fallback \
+                       --allow-incomplete-classpath \
+                       --trace-object-instantiation=java.lang.Thread \
                        -H:ReflectionConfigurationFiles=reflect-config.json \
                        -H:+ReportExceptionStackTraces \
-                       --trace-object-instantiation=java.lang.Thread
+                       -jar shan-${{env.VERSION}}-snapshot.jar
                        
       - name: Publish Linux Image
         if: success()
