@@ -45,7 +45,7 @@ jobs:
       - name: Get version Number
       #  https://blogs.oracle.com/developers/post/building-cross-platform-native-images-with-graalvm
         run: |
-          echo "::set-env name=VERSION::$(cat deps.edn | grep :version | awk '{print $2}')"
+          echo "VERSION=$(cat deps.edn | grep :version | awk '{print $2}')" >> $GITHUB_ENV
       
       - name: Publish Jar
         uses: actions/upload-artifact@v2-preview
