@@ -7,6 +7,6 @@
  {:native-deps
   {:extra-deps {com.github.clj-easy/graal-build-time {:mvn/version "0.1.0"}}}
   :build
-  {:deps {io.github.clojure/tools.build {:git/tag "v0.3.0" :git/sha "e418fc9"}
+  {:deps {io.github.clojure/tools.build {:git/tag "v0.7.7" :git/sha "1474ad6"}
           io.github.seancorfield/build-clj {:git/tag "v0.6.7" :git/sha "22c2d09" :deps/root "slim"}}
    :ns-default build}}}
