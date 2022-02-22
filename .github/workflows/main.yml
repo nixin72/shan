@@ -46,14 +46,11 @@ jobs:
         run: |
           echo "VERSION=$(cat deps.edn | grep :version | awk '{print substr($2, 2, length($2)-2)}')" >> $GITHUB_ENV
 
-      - name: Setup publish directory
-        run: mkdir build
-
       - name: Publish Jar
         uses: actions/upload-artifact@v2
         with:
           name: "shan-${{env.VERSION}}-snapshot.jar"
-          path: build/shan.jar
+          path: shan.jar
 
       - name: Create Release
         if: contains(github.ref, 'v')
