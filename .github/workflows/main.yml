@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: "shan-${{env.VERSION}}-snapshot.jar"
-          path: target/shan-standalone.jar
+          path: shan.jar
 
       - name: Create Release
         if: contains(github.ref, 'v')
@@ -69,7 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: target/shan-standalone.jar
+          asset_path: shan.jar
           asset_name: shan-${{env.VERSION}}-snapshot.jar
           asset_content_type: application/jar-archive
 
@@ -132,7 +132,7 @@ jobs:
                 
       - name: Build native image
         run: |
-          native-image -jar shan-standalone.jar \
+          native-image -jar shan.jar \
                        --no-server \
                        --no-fallback \
                        --trace-object-instantiation=java.lang.Thread \
