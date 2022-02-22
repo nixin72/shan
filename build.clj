@@ -1,17 +1,9 @@
 (ns build
   (:require
-   [clojure.tools.build.api :as b]
-   [org.corfield.build :as bb]))
+   [clojure.tools.build.api :as b]))
 
-(def lib 'nixin72/shan)
 (def class-dir "target/classes")
-(def version "0.0.1")
 
-(defn uber [_]
-  (bb/uber {:lib lib :main 'shan.core})
-  )
-
-(comment
 (def uber-basis
   (b/create-basis {:project "deps.edn"
                    :aliases [:native-deps]}))
@@ -27,4 +19,3 @@
            :uber-file "shan.jar"
            :basis uber-basis
            :main 'shan.core}))
-)
