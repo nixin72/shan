@@ -25,15 +25,12 @@
 (def windows? (not unix?))
 
 (defn build-path [& path-elements]
-  (let [dir (->> path-elements
-                 (mapv #(cond (string? %) %
-                              (map? %) (case OS
-                                         ("Linux" "Mac OS X") (:unix %)
-                                         (:win %))))
-                 (apply str))]
-    (when-not (file-exists? dir)
-      (-> dir java.io.File. .mkdir))
-    dir))
+  (->> path-elements
+       (mapv #(cond (string? %) %
+                    (map? %) (case OS
+                               ("Linux" "Mac OS X") (:unix %)
+                               (:win %))))
+       (apply str)))
 
 (def ^:dynamic data-dir
   (build-path home {:unix local :win appdata} "shan/"))
@@ -46,8 +43,19 @@
 (def ^:dynamic gen-file (str data-dir "generations.edn"))
 (def ^:dynamic cache-file (str cache-dir "cache.edn"))
 
-(when-not (file-exists? temp-file)
-  (create-file temp-file))
+(defn setup-first-time-use []
+  ;; Make directories
+  (when-not (file-exists? data-dir)
+    (-> data-dir java.io.File. .mkdir))
+  (when-not (file-exists? cache-dir)
+    (-> cache-dir java.io.File. .mkdir))
 
-(when-not (file-exists? gen-file)
-  (create-file gen-file "[{}]"))
+  ;; Make files
+  (when-not (file-exists? conf-file)
+    (create-file conf-file "{}"))
+  (when-not (file-exists? temp-file)
+    (create-file temp-file "{}"))
+  (when-not (file-exists? gen-file)
+    (create-file gen-file "[{}]"))
+  (when-not (file-exists? cache-file)
+    (create-file cache-file "{}")))

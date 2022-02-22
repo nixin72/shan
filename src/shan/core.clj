@@ -50,6 +50,7 @@
     init/command]})
 
 (defn -main [& args]
+  (c/setup-first-time-use)
   (if (= "root" (System/getProperty "user.name"))
     (p/fatal-error "Do not run as root.")
     (try
