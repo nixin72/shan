@@ -132,7 +132,7 @@ jobs:
           
       - name: Build native image
         run: |
-          native-image -jar ../target/shan-standalone.jar \
+          native-image -jar shan-${{env.VERSION}}-snapshot.jar \
                        --no-server \
                        --no-fallback \
                        --allow-incomplete-classpath \
