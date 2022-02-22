@@ -84,10 +84,10 @@ jobs:
         with:
           name: "upload_url.txt"
           path: "upload_url.txt"
-          
-################################################################################
-################################################################################
-################################################################################
+
+  ################################################################################
+  ################################################################################
+  ################################################################################
 
   build-linux:
     needs: [build-jar]
@@ -96,40 +96,40 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        
+
       - name: Setup Java
         uses: actions/setup-java@v2
         with:
           distribution: "temurin"
           java-version: 11
-          
+
       - name: Setup GraalVM
         uses: DeLaGuardo/setup-graalvm@5.0
-        with: 
+        with:
           graalvm-version: 21.3.0.java11
-          
+
       - name: Install native-image plugin
         run: gu install native-image
-        
+
       - name: Get version number
-        run: | 
+        run: |
           echo "VERSION=$(cat deps.edn | grep :version | awk '{print substr($2, 2, length($2)-2)}')" >> $GITHUB_ENV
-      
+
       - name: Get JAR file
         uses: actions/download-artifact@v2
         with:
           name: shan-${{env.VERSION}}-snapshot.jar
-      
+
       - name: Download release URL
         if: contains(github.ref, 'v')
         uses: actions/download-artifact@v2
         with:
-          name: 'upload-url.txt'
-          
+          name: "upload-url.txt"
+
       - name: Set upload URL env var
         if: contains(github.ref, 'v')
         run: echo "UPLOAD_URL=$(cat upload_url.txt)" >> $GITHUB_ENV
-                
+
       - name: Build native image
         run: |
           native-image -jar shan.jar \
@@ -139,26 +139,25 @@ jobs:
                        -H:Name=shan-${{env.VERSION}}-snapshot-linux \
                        -H:ReflectionConfigurationFiles=reflect-config.json \
                        -H:+ReportExceptionStackTraces
-                       
-      - run: chmod +x *
-      - run: ./shan-${{env.VERSION}}-snapshot-linux --help
-       
+
+      # - run: chmod +x *
+      # - run: ./shan-${{env.VERSION}}-snapshot-linux --help
+
       - name: Publish Linux Image
         if: success()
         uses: actions/upload-artifact@v2
-        with: 
+        with:
           name: shan-${{env.VERSION}}-snapshot-linux
           path: shan-${{env.VERSION}}-snapshot-linux
-          
+
       - name: Upload Linux Image Asset
         if: success() && contains(github.ref, 'v')
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
-        env: 
+        env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with: 
+        with:
           upload_url: ${{env.UPLOAD_URL}}
           asset_name: shan-${{env.VERSION}}-snapshot-linux
           asset_path: shan-${{env.VERSION}}-snapshot
           asset_content_type: application/octet-stream
-        
