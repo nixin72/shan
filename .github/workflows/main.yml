@@ -1,14 +1,14 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Produce Builds
+name: Publish Jar file
 
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -25,68 +25,67 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
       - name: Setup Java
         uses: actions/setup-java@v2
-        with: 
-          distribution: 'temurin'
+        with:
+          distribution: "temurin"
           java-version: 11
-      
+
       - name: Setup Clojure
         uses: DeLaGuardo/setup-clojure@4.0
-        with: 
+        with:
           cli: 1.10.3.1029
-          
-      - name: Compile jar
-        run: clojure -J-Dclojure.main.report=stderr -T:build uber 
+          github-token: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Build jar
+        run: clojure -J-Dclojure.main.report=stderr -T:build uber
         shell: bash
-        
-          
+
       - name: Get version Number
-      #  https://blogs.oracle.com/developers/post/building-cross-platform-native-images-with-graalvm
         run: |
-          echo "VERSION=$(cat deps.edn | grep :version | awk '{print $2}')" >> $GITHUB_ENV
-      
+          echo "VERSION=$(cat deps.edn | grep :version | awk '{print substr($2, 2, length($2)-2)}')" >> $GITHUB_ENV
+
       - name: Publish Jar
         uses: actions/upload-artifact@v2-preview
         with:
-          name: 'shan-${{env.VERSION}}-snapshot.jar'
+          name: "shan-${{env.VERSION}}-snapshot.jar"
           path: build/libs/*-snapshot.jar
-          
+
       - name: Create Release
         if: contains(github.ref, 'v')
         id: create_release
         uses: actions/create-release@v1
-        env: 
+        env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with: 
+        with:
           tag_name: ${{github.ref}}
           release_name: Release ${{github.ref}}
           body: |
             Initial Release
           draft: false
           prerelease: true
-          
+
       - name: Upload Release Asset
         if: contains(github.ref, 'v')
         id: upload-release-asset
         uses: actions/upload-release-asset@v1
-        env: 
+        env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with: 
+        with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: build/libs/shan-${{env.VERSION}}-snapshot.jar
-          asset_name: shan-${{env.version}}-snapshot.jar
+          asset_name: shan-${{env.VERSION}}-snapshot.jar
           asset_content_type: application/jar-archive
-      
+
       - name: Write Upload URL To Flie
         if: contains(github.ref, 'v')
         run: |
           echo "${{steps.create_release.outputs.upload_url}}" > upload_url.txt
-      
+
       - name: Publish Upload URL
         if: contains(github.ref, 'v')
         uses: actions/upload-artifact@v2-preview
         with:
-          name: 'upload_url.txt'
-          path: 'upload_url.txt'
+          name: "upload_url.txt"
+          path: "upload_url.txt"
