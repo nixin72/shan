@@ -29,11 +29,12 @@ jobs:
       - name: Setup Clojure
         uses: DeLaGuardo/setup-clojure@4.0
         with: 
-          cli: 1.10.3
+          cli: 1.10.1.693
           
       - name: Compile jar
-        run: | 
-          clojure -T:build uber
+        run: clojure -T:build uber
+        shell: bash
+        
           
       - name: Get version Number
       #  https://blogs.oracle.com/developers/post/building-cross-platform-native-images-with-graalvm
