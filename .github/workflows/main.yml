@@ -129,9 +129,6 @@ jobs:
       - name: Set upload URL env var
         if: contains(github.ref, 'v')
         run: echo "UPLOAD_URL=$(cat upload_url.txt)" >> $GITHUB_ENV
-          
-      - run: pwd
-      - run: ls -lah
                 
       - name: Build native image
         run: |
@@ -140,10 +137,10 @@ jobs:
                        --no-fallback \
                        --allow-incomplete-classpath \
                        --trace-object-instantiation=java.lang.Thread \
-                       -H:Name=shan-${{env.VERSION}}-linux \
+                       -H:Name=shan-${{env.VERSION}}-snapshot-linux \
                        -H:ReflectionConfigurationFiles=reflect-config.json \
-                       -H:+ReportExceptionStackTraces                       
-                       
+                       -H:+ReportExceptionStackTraces                           
+       
       - name: Publish Linux Image
         if: success()
         uses: actions/upload-artifact@v2
