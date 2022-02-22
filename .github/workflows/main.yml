@@ -138,7 +138,7 @@ jobs:
                        --trace-object-instantiation=java.lang.Thread \
                        -H:Name=shan-${{env.VERSION}}-snapshot-linux \
                        -H:ReflectionConfigurationFiles=reflect-config.json \
-                       -H:+ReportExceptionStackTraces                           
+                       -H:+ReportExceptionStackTraces
        
       - name: Publish Linux Image
         if: success()
