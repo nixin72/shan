@@ -44,6 +44,7 @@
 (def ^:dynamic cache-file (str cache-dir "cache.edn"))
 
 (defn setup-first-time-use []
+  (println "Here")
   ;; Make directories
   (when-not (file-exists? data-dir)
     (-> data-dir java.io.File. .mkdir))
@@ -59,3 +60,5 @@
     (create-file gen-file "[{}]"))
   (when-not (file-exists? cache-file)
     (create-file cache-file "{}")))
+
+(setup-first-time-use)

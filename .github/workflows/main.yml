@@ -140,8 +140,9 @@ jobs:
                        -H:ReflectionConfigurationFiles=reflect-config.json \
                        -H:+ReportExceptionStackTraces
 
-      # - run: chmod +x *
-      # - run: ./shan-${{env.VERSION}}-snapshot-linux --help
+      - run: ls -lah
+      - run: chmod +x *
+      - run: ./shan-${{env.VERSION}}-snapshot-linux
 
       - name: Publish Linux Image
         if: success()
