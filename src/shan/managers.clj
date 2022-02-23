@@ -2,7 +2,7 @@
   (:require
    [clojure.java.shell :as shell]
    [shan.print :as p]
-   [shan.config :as c]
+   [shan.config :refer [app-config]]
    [shan.util :as u]
    [shan.managers.installed :as installed]
    [shan.managers.list :as list]))
@@ -90,7 +90,7 @@
   []
   (let [managers
         (reduce-kv (fn [a k v]
-                     (if (if c/windows?
+                     (if (if (:windows? @app-config)
                            (= 0 (:exit (shell/sh "cmd" "/C" "where" (name k))))
                            (= 0 (:exit (shell/sh "which" (name k)))))
                        (assoc a k v)

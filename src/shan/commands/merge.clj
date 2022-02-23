@@ -1,7 +1,7 @@
 (ns shan.commands.merge
   (:require
    [shan.print :as p]
-   [shan.config :as c]
+   [shan.config :refer [app-config]]
    [shan.util :as u]))
 
 (defn- cli-merge
@@ -9,8 +9,8 @@
   [{:keys []}]
   (let [temp (u/get-temp)]
     (u/add-to-conf temp)
-    (spit c/temp-file "{}")
-    (if c/testing? temp p/exit-code)))
+    (spit (:temp-file @app-config) "{}")
+    (if (:testing? @app-config) temp p/exit-code)))
 
 (def command
   {:command "merge"

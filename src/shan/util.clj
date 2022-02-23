@@ -10,7 +10,7 @@
    [flatland.ordered.map :as omap :refer [ordered-map]]
    [flatland.ordered.set :as oset :refer [ordered-set]]
    [shan.print :as p]
-   [shan.config :as c]))
+   [shan.config :refer [app-config]]))
 
 (defn deserialize [ds]
   (walk/prewalk #(cond
@@ -152,34 +152,34 @@
 
 (defn get-new []
   (try
-    (read-edn c/conf-file)
+    (read-edn (:conf-file @app-config))
     (catch java.lang.RuntimeException _
       {})))
 
 (defn get-temp []
   (try
-    (read-edn c/temp-file)
+    (read-edn (:temp-file @app-config))
     (catch java.lang.RuntimeException _ {})
     (catch java.io.FileNotFoundException _
-      (-> c/data-dir java.io.File. .mkdir)
-      (-> c/temp-file java.io.File. .createNewFile)
-      (spit c/temp-file "{}")
+      (-> (:data-dir @app-config) java.io.File. .mkdir)
+      (-> (:temp-file @app-config) java.io.File. .createNewFile)
+      (spit (:temp-file @app-config) "{}")
       {})))
 
 (defn get-old []
   (try
-    (read-edn c/gen-file)
+    (read-edn (:gen-file @app-config))
     (catch java.lang.RuntimeException _ [{}])
     (catch java.io.FileNotFoundException _
-      (-> c/data-dir java.io.File. .mkdir)
-      (-> c/gen-file java.io.File. .createNewFile)
-      (spit c/gen-file "[]")
+      (-> (:data-dir @app-config) java.io.File. .mkdir)
+      (-> (:gen-file @app-config) java.io.File. .createNewFile)
+      (spit (:gen-file @app-config) "[]")
       [])))
 
 (defn add-generation [new-conf]
   (try
     (let [old (conj (get-old) new-conf)]
-      (write-edn c/gen-file old))
+      (write-edn (:gen-file @app-config) old))
     (catch java.io.FileNotFoundException _
       (p/error "Error occured creating a new generation."))))
 
@@ -187,35 +187,35 @@
   (try
     (let [old (pop (get-old))]
       (if (empty? old)
-        (write-edn c/gen-file [{}])
-        (write-edn c/gen-file old)))
+        (write-edn (:gen-file @app-config) [{}])
+        (write-edn (:gen-file @app-config) old)))
     (catch java.io.FileNotFoundException _
       (p/error "Error occured creating a new generation."))))
 
-(defn write-to-conf [contents] (write-edn c/conf-file contents))
-(defn write-to-temp [contents] (write-edn c/temp-file contents))
+(defn write-to-conf [contents] (write-edn (:conf-file @app-config) contents))
+(defn write-to-temp [contents] (write-edn (:temp-file @app-config) contents))
 
 (defn add-to-temp
   ([install-map] (add-to-temp (get-temp) install-map))
-  ([config install-map] (write-edn c/temp-file (merge-conf config install-map))))
+  ([config install-map] (write-edn (:temp-file @app-config) (merge-conf config install-map))))
 
 (defn add-to-conf
   ([install-map] (add-to-conf (get-new) install-map))
   ([config install-map]
    (let [gen (merge-conf config install-map)]
      (add-generation (dissoc gen :default-manager))
-     (write-edn c/conf-file gen))))
+     (write-edn (:conf-file @app-config) gen))))
 
 (defn remove-from-temp
   ([remove-map] (remove-from-temp (get-temp) remove-map))
-  ([config remove-map] (write-edn c/temp-file (remove-from-config config remove-map))))
+  ([config remove-map] (write-edn (:temp-file @app-config) (remove-from-config config remove-map))))
 
 (defn remove-from-conf
   ([remove-map] (remove-from-conf (get-new) remove-map))
   ([config remove-map]
    (let [gen (remove-from-config config remove-map)]
      (add-generation (dissoc gen :default-manager))
-     (write-edn c/conf-file gen))))
+     (write-edn (:conf-file @app-config) gen))))
 
 ;; These are for testing, since I can easily mock them.
 (defn already-installed? [installed-fn package] (installed-fn package))

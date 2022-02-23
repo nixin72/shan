@@ -3,10 +3,10 @@
    [clojure.string :as str]
    [clojure.java.shell :as shell]
    [shan.print :as p]
-   [shan.config :as c]
    [shan.util :as u]
    [shan.cache :as cache]
-   [shan.managers :as pm]))
+   [shan.managers :as pm]
+   [shan.config :as c]))
 
 (def password (atom nil))
 

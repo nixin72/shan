@@ -2,14 +2,14 @@
   (:require
    [clojure.string :as str]
    [shan.print :as p]
-   [shan.config :as c]
+   [shan.config :as c :refer [app-config]]
    [shan.managers :as pm]
    [shan.util :as u]
    [shan.commands.edit :as edit]
    [shan.commands.-options :as opts]))
 
 (defn- write-config [config]
-  (u/write-edn c/conf-file config)
+  (u/write-edn (:conf-file @app-config) config)
   (when (u/yes-or-no true
                      "Would you like to edit your config"
                      "(Use this opportunity to remove what you don't need)")

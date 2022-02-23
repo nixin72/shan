@@ -3,11 +3,11 @@
    [clojure.data :as data]
    [shan.print :as p]
    [shan.util :as u]
-   [shan.config :as c]
+   [shan.config :refer [app-config]]
    [shan.packages :as ps]
    [shan.commands.-options :as opts]))
 
-(defn- cli-sync [{:keys [check]}]
+(defn- cli-sync [{:keys [check batch]}]
   (let [old-config (u/get-old)
         last-config (last old-config)
         new-config (dissoc (u/get-new) :default-manager)
@@ -17,8 +17,8 @@
     (when-not (= [add del] [nil nil])
       (u/add-generation new-config))
 
-    (if c/testing?
-      [(reduce-kv #(assoc %1 %2 (when %3 (ps/install-pkgs %2 %3 check))) {} add)
+    (if (:testing? @app-config)
+      [(reduce-kv #(assoc %1 %2 (when %3 (ps/install-pkgs %2 %3 check batch))) {} add)
        (reduce-kv #(assoc %1 %2 (when %3 (ps/remove-pkgs %2 %3 check))) {} del)]
       p/exit-code)))
 

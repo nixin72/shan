@@ -2,7 +2,7 @@
   (:require [shan.util :as u]
             [shan.print :as p]
             [shan.managers :as pm]
-            [shan.config :as c]))
+            [shan.config :as c :refer [app-config]]))
 
 (defn- cli-default
   "Sets the :default-manager key in the shan.edn file"
@@ -15,7 +15,7 @@
                    "No default package manager has been set."))
 
       (contains? pm/package-managers (keyword default))
-      (u/write-edn c/conf-file (assoc conf :default-manager (keyword default)))
+      (u/write-edn (:conf-file @app-config) (assoc conf :default-manager (keyword default)))
 
       :else
       (p/error "Package manager" (p/bold default) "is not known by shan."))

@@ -1,6 +1,7 @@
 (ns shan.config
   (:require
-   [clojure.java.io :as io]))
+   [clojure.java.io :as io]
+   [clojure.edn :as edn]))
 
 (defn file-exists? [file-path]
   (-> file-path io/file .exists))
@@ -20,16 +21,16 @@
                                (:win %))))
        (apply str)))
 
+(def ^:dynamic testing? false)
+(def version (->> "deps.edn" slurp .getBytes io/reader java.io.PushbackReader. edn/read :version))
 (def local ".local/share/")
 (def cache ".cache/")
 (def appdata "AppData/Local/")
 
 (def app-config
   (delay
-   (let [conf
-         {:testing? false
-          :home? (str (System/getenv "HOME") "/")
-          :os (System/getProperty "os.name")}]
+   (let [conf {:home (str (System/getenv "HOME") "/")
+               :os (System/getProperty "os.name")}]
      (as-> conf $
        (assoc $ :unix? (some #{(:os $)} #{"Linux" "Mac OS X"}))
        (assoc $ :windows? (not (:unix? $)))
@@ -39,6 +40,28 @@
        (assoc $ :temp-file (str (:data-dir $) "temporary.edn"))
        (assoc $ :gen-file (str (:data-dir $) "generations.edn"))
        (assoc $ :cache-file (str (:data-dir $) "cache.edn"))))))
+
+(defn setup-first-time-use []
+  (println "Here")
+  (println @app-config)
+  ;; Make directories
+  (when-not (file-exists? (:data-dir @app-config))
+    (-> (:data-dir @app-config) java.io.File. .mkdirs))
+  (when-not (file-exists? (:cache-dir @app-config))
+    (-> (:cache-dir @app-config) java.io.File. .mkdirs))
+
+  (prn (file-exists? (:data-dir @app-config))
+       (file-exists? (:cache-dir @app-config)))
+
+  ;; Make files
+  (when-not (file-exists? (:conf-file @app-config))
+    (create-file (:conf-file @app-config) "{}"))
+  (when-not (file-exists? (:temp-file @app-config))
+    (create-file (:temp-file @app-config) "{}"))
+  (when-not (file-exists? (:gen-file @app-config))
+    (create-file (:gen-file @app-config) "[{}]"))
+  (when-not (file-exists? (:cache-file @app-config))
+    (create-file (:cache-file @app-config) "{}")))
 
 (comment
   (def ^:dynamic testing? false)
@@ -58,21 +81,3 @@
   (def ^:dynamic temp-file (str data-dir "temporary.edn"))
   (def ^:dynamic gen-file (str data-dir "generations.edn"))
   (def ^:dynamic cache-file (str cache-dir "cache.edn")))
-
-(defn setup-first-time-use []
-  (println "Here")
-  ;; Make directories
-  (when-not (file-exists? (:data-dir @app-config))
-    (-> (:data-dir @app-config) java.io.File. .mkdir))
-  (when-not (file-exists? (:cache-dir @app-config))
-    (-> (:cache-dir @app-config) java.io.File. .mkdir))
-
-  ;; Make files
-  (when-not (file-exists? (:conf-file @app-config))
-    (create-file (:conf-file @app-config) "{}"))
-  (when-not (file-exists? (:temp-file @app-config))
-    (create-file (:temp-file @app-config) "{}"))
-  (when-not (file-exists? (:gen-file @app-config))
-    (create-file (:gen-file @app-config) "[{}]"))
-  (when-not (file-exists? (:cache-file @app-config))
-    (create-file (:cache-file @app-config) "{}")))

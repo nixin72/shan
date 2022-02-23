@@ -5,8 +5,8 @@
    [shan.util :as u]
    [shan.managers :as pm]
    [shan.packages :as ps]
-   [shan.config :as c]
-   [shan.cache :as cache]))
+   [shan.cache :as cache]
+   [shan.config :as c]))
 
 (defn generate-success-report
   "Used to check which package installations succeeded or failed.

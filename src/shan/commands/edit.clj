@@ -1,14 +1,14 @@
 (ns shan.commands.edit
   (:require
    [shan.print :as p]
-   [shan.config :as c]
+   [shan.config :refer [app-config]]
    [shan.util :as u]
    [shan.commands.-options :as opts]))
 
 (defn- cli-edit
   "Launches a subprocess to edit your shan.edn file."
   [& _]
-  (u/sh-verbose (System/getenv "EDITOR") c/conf-file)
+  (u/sh-verbose (System/getenv "EDITOR") (:conf-file @app-config))
   p/exit-code)
 
 (def command
