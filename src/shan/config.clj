@@ -60,5 +60,3 @@
     (create-file gen-file "[{}]"))
   (when-not (file-exists? cache-file)
     (create-file cache-file "{}")))
-
-(setup-first-time-use)
