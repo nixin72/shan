@@ -2,8 +2,6 @@
   (:require
    [clojure.java.io :as io]))
 
-(def version "0.7.0")
-
 (defn file-exists? [file-path]
   (-> file-path io/file .exists))
 
@@ -14,17 +12,7 @@
    (spit file-path contents)
    (println "Creating file: " file-path)))
 
-(def ^:dynamic testing? false)
-(def ^:dynamic home (str (System/getenv "HOME") "/"))
-(def local ".local/share/")
-(def cache ".cache/")
-(def appdata "AppData/Local/")
-
-(def OS (System/getProperty "os.name"))
-(def unix? (some #{OS} #{"Linux" "Mac OS X"}))
-(def windows? (not unix?))
-
-(defn build-path [& path-elements]
+(defn build-path [OS & path-elements]
   (->> path-elements
        (mapv #(cond (string? %) %
                     (map? %) (case OS
@@ -32,31 +20,59 @@
                                (:win %))))
        (apply str)))
 
-(def ^:dynamic data-dir
-  (build-path home {:unix local :win appdata} "shan/"))
+(def local ".local/share/")
+(def cache ".cache/")
+(def appdata "AppData/Local/")
 
-(def ^:dynamic cache-dir
-  (build-path home {:unix cache :win appdata} "shan/"))
+(def app-config
+  (delay
+   (let [conf
+         {:testing? false
+          :home? (str (System/getenv "HOME") "/")
+          :os (System/getProperty "os.name")}]
+     (as-> conf $
+       (assoc $ :unix? (some #{(:os $)} #{"Linux" "Mac OS X"}))
+       (assoc $ :windows? (not (:unix? $)))
+       (assoc $ :data-dir (build-path (:os $) (:home $) {:unix local :win appdata} "shan/"))
+       (assoc $ :cache-dir (build-path (:os $) (:home $) {:unix cache :win appdata} "shan/"))
+       (assoc $ :conf-file (str (:data-dir $) "shan.edn"))
+       (assoc $ :temp-file (str (:data-dir $) "temporary.edn"))
+       (assoc $ :gen-file (str (:data-dir $) "generations.edn"))
+       (assoc $ :cache-file (str (:data-dir $) "cache.edn"))))))
 
-(def ^:dynamic conf-file (str data-dir "shan.edn"))
-(def ^:dynamic temp-file (str data-dir "temporary.edn"))
-(def ^:dynamic gen-file (str data-dir "generations.edn"))
-(def ^:dynamic cache-file (str cache-dir "cache.edn"))
+(comment
+  (def ^:dynamic testing? false)
+  (def ^:dynamic home (str (System/getenv "HOME") "/"))
+
+  (def OS (System/getProperty "os.name"))
+  (def unix? (some #{OS} #{"Linux" "Mac OS X"}))
+  (def windows? (not unix?))
+
+  (def ^:dynamic data-dir
+    (build-path home {:unix local :win appdata} "shan/"))
+
+  (def ^:dynamic cache-dir
+    (build-path home {:unix cache :win appdata} "shan/"))
+
+  (def ^:dynamic conf-file (str data-dir "shan.edn"))
+  (def ^:dynamic temp-file (str data-dir "temporary.edn"))
+  (def ^:dynamic gen-file (str data-dir "generations.edn"))
+  (def ^:dynamic cache-file (str cache-dir "cache.edn")))
 
 (defn setup-first-time-use []
   (println "Here")
   ;; Make directories
-  (when-not (file-exists? data-dir)
-    (-> data-dir java.io.File. .mkdir))
-  (when-not (file-exists? cache-dir)
-    (-> cache-dir java.io.File. .mkdir))
+  (when-not (file-exists? (:data-dir @app-config))
+    (-> (:data-dir @app-config) java.io.File. .mkdir))
+  (when-not (file-exists? (:cache-dir @app-config))
+    (-> (:cache-dir @app-config) java.io.File. .mkdir))
 
   ;; Make files
-  (when-not (file-exists? conf-file)
-    (create-file conf-file "{}"))
-  (when-not (file-exists? temp-file)
-    (create-file temp-file "{}"))
-  (when-not (file-exists? gen-file)
-    (create-file gen-file "[{}]"))
-  (when-not (file-exists? cache-file)
-    (create-file cache-file "{}")))
+  (when-not (file-exists? (:conf-file @app-config))
+    (create-file (:conf-file @app-config) "{}"))
+  (when-not (file-exists? (:temp-file @app-config))
+    (create-file (:temp-file @app-config) "{}"))
+  (when-not (file-exists? (:gen-file @app-config))
+    (create-file (:gen-file @app-config) "[{}]"))
+  (when-not (file-exists? (:cache-file @app-config))
+    (create-file (:cache-file @app-config) "{}")))
