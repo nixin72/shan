@@ -10,36 +10,43 @@
 (def ^:dynamic package-managers
   ;; TODO: Support MacOS and Windows better
   {:brew {:type :system
+          :os [:macos? :linux?]
           :list list/brew
           :install "brew install"
           :remove "brew uninstall"
           :installed? "brew list"}
    :apt {:type :system
+         :os [:linux?]
          :pre-install "apt update"
          :install "apt install"
          :add-ppa "add-apt-repository"
          :remove "apt remove"
          :installed? "apt list"}
    :choco {:type :system
+           :os [:windows?]
            :install "choco install",
            :remove "choco uninstall",
            :installed? "choco list --local-only"}
    :scoop {:type :system
+           :os [:windows?]
            :install "scoop install"
            :remove "scoop uninstall"
            :installed? "scoop info"}
    :winget {:type :system
+            :os [:windows?]
             :install "winget install"
             :remove "winget uninstall"
             :installed? "winget list --exact"}
    ;; NOTE: Proper support
    :pacman {:type :system
+            :os [:linux?]
             :list list/pacman
             :sudo? true
             :install "sudo -S -- pacman -S --noconfirm"
             :remove "sudo -S -- pacman -R --noconfirm"
             :installed? "pacman -Q"}
    :paru {:type :system
+          :os [:linux?]
           :uses :pacman
           :list list/pacman
           :sudo? true
@@ -47,6 +54,7 @@
           :remove "paru --sudoflags -S -R --noconfirm"
           :installed? "paru -Q"}
    :yay {:type :system
+         :os [:linux?]
          :uses :pacman
          :sudo? true
          :list list/pacman
@@ -89,13 +97,16 @@
   "Filter the package managers to just what's installed on the system"
   []
   (let [managers
-        (reduce-kv (fn [a k v]
-                     (if (if (:windows? @app-config)
-                           (= 0 (:exit (shell/sh "cmd" "/C" "where" (name k))))
-                           (= 0 (:exit (shell/sh "which" (name k)))))
-                       (assoc a k v)
-                       a))
-                   {} package-managers)]
+        (->> package-managers
+             ;; Filter out package managers that can't be installed on this system
+             (filter (fn [[_ v]] (->> (select-keys @app-config (:os v)) vals (some #{true}))))
+             (reduce (fn [a [k v]]
+                       (if (if (:windows? @app-config)
+                             (= 0 (:exit (shell/sh "cmd" "/C" "where" (name k))))
+                             (= 0 (:exit (shell/sh "which" (name k)))))
+                         (assoc a k v)
+                         a))
+                     {}))]
     (if (empty? managers)
       (p/fatal-error "No known package managers available on your system")
 

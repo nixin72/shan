@@ -32,7 +32,9 @@
    (let [conf {:home (str (System/getenv "HOME") "/")
                :os (System/getProperty "os.name")}]
      (as-> conf $
-       (assoc $ :unix? (some #{(:os $)} #{"Linux" "Mac OS X"}))
+       (assoc $ :linux? (= (:os $) "Linux"))
+       (assoc $ :macos? (= (:os $) "Mac OS X"))
+       (assoc $ :unix? (or (:linux? $) (:macos? $)))
        (assoc $ :windows? (not (:unix? $)))
        (assoc $ :data-dir (build-path (:os $) (:home $) {:unix local :win appdata} "shan/"))
        (assoc $ :cache-dir (build-path (:os $) (:home $) {:unix cache :win appdata} "shan/"))
@@ -42,16 +44,11 @@
        (assoc $ :cache-file (str (:data-dir $) "cache.edn"))))))
 
 (defn setup-first-time-use []
-  (println "Here")
-  (println @app-config)
   ;; Make directories
   (when-not (file-exists? (:data-dir @app-config))
     (-> (:data-dir @app-config) java.io.File. .mkdirs))
   (when-not (file-exists? (:cache-dir @app-config))
     (-> (:cache-dir @app-config) java.io.File. .mkdirs))
-
-  (prn (file-exists? (:data-dir @app-config))
-       (file-exists? (:cache-dir @app-config)))
 
   ;; Make files
   (when-not (file-exists? (:conf-file @app-config))
@@ -62,22 +59,3 @@
     (create-file (:gen-file @app-config) "[{}]"))
   (when-not (file-exists? (:cache-file @app-config))
     (create-file (:cache-file @app-config) "{}")))
-
-(comment
-  (def ^:dynamic testing? false)
-  (def ^:dynamic home (str (System/getenv "HOME") "/"))
-
-  (def OS (System/getProperty "os.name"))
-  (def unix? (some #{OS} #{"Linux" "Mac OS X"}))
-  (def windows? (not unix?))
-
-  (def ^:dynamic data-dir
-    (build-path home {:unix local :win appdata} "shan/"))
-
-  (def ^:dynamic cache-dir
-    (build-path home {:unix cache :win appdata} "shan/"))
-
-  (def ^:dynamic conf-file (str data-dir "shan.edn"))
-  (def ^:dynamic temp-file (str data-dir "temporary.edn"))
-  (def ^:dynamic gen-file (str data-dir "generations.edn"))
-  (def ^:dynamic cache-file (str cache-dir "cache.edn")))
